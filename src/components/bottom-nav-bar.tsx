@@ -12,6 +12,11 @@ const TAB_ITEMS = [
     icon: { ios: 'house.fill', android: 'home', web: 'home' },
   },
   {
+    name: 'cobrancas',
+    label: 'Cobranças',
+    icon: { ios: 'map.fill', android: 'map', web: 'map' },
+  },
+  {
     name: 'clientes',
     label: 'Clientes',
     icon: { ios: 'person.2.fill', android: 'group', web: 'group' },
@@ -20,11 +25,6 @@ const TAB_ITEMS = [
     name: 'financeiro',
     label: 'Financeiro',
     icon: { ios: 'chart.bar.fill', android: 'bar_chart', web: 'bar_chart' },
-  },
-  {
-    name: 'cobrancas',
-    label: 'Cobranças',
-    icon: { ios: 'map.fill', android: 'map', web: 'map' },
   },
   {
     name: 'estoque',

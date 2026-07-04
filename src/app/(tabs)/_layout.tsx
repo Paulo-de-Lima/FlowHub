@@ -12,9 +12,9 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: FlowHubColors.lightGray },
       }}>
       <Tabs.Screen name="home" options={{ title: 'Início' }} />
+      <Tabs.Screen name="cobrancas" options={{ title: 'Cobranças' }} />
       <Tabs.Screen name="clientes" options={{ title: 'Clientes' }} />
       <Tabs.Screen name="financeiro" options={{ title: 'Financeiro' }} />
-      <Tabs.Screen name="cobrancas" options={{ title: 'Cobranças' }} />
       <Tabs.Screen name="estoque" options={{ title: 'Estoque' }} />
       <Tabs.Screen name="calculadora" options={{ title: 'Calculadora' }} />
     </Tabs>
