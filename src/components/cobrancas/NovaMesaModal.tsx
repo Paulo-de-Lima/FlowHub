@@ -10,6 +10,11 @@ import {
   View,
 } from 'react-native';
 
+import {
+  VALOR_FICHA_PADRAO,
+  formatValorFichaInput,
+  parseValorFichaInput,
+} from '@/components/cobrancas/cobrancas-utils';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
 
@@ -18,9 +23,10 @@ type NovaMesaModalProps = {
   saving: boolean;
   error: string | null;
   initialNumeracao?: string;
+  initialValorFicha?: number;
   title?: string;
   onClose: () => void;
-  onSave: (numeracao: string) => void;
+  onSave: (data: { numeracao: string; valor_ficha: number }) => void;
 };
 
 export function NovaMesaModal({
@@ -28,19 +34,22 @@ export function NovaMesaModal({
   saving,
   error,
   initialNumeracao = '',
+  initialValorFicha = VALOR_FICHA_PADRAO,
   title = 'Nova mesa',
   onClose,
   onSave,
 }: NovaMesaModalProps) {
   const [numeracao, setNumeracao] = useState('');
+  const [valorFicha, setValorFicha] = useState(formatValorFichaInput(VALOR_FICHA_PADRAO));
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
       setNumeracao(initialNumeracao);
+      setValorFicha(formatValorFichaInput(initialValorFicha));
       setLocalError(null);
     }
-  }, [visible, initialNumeracao]);
+  }, [visible, initialNumeracao, initialValorFicha]);
 
   const displayError = localError ?? error;
 
@@ -49,8 +58,15 @@ export function NovaMesaModal({
       setLocalError('Informe a numeração.');
       return;
     }
+
+    const ficha = parseValorFichaInput(valorFicha);
+    if (ficha === null) {
+      setLocalError('Valor da ficha inválido.');
+      return;
+    }
+
     setLocalError(null);
-    onSave(numeracao.trim());
+    onSave({ numeracao: numeracao.trim(), valor_ficha: ficha });
   }
 
   return (
@@ -72,6 +88,21 @@ export function NovaMesaModal({
                 style={styles.input}
                 autoFocus
               />
+            </View>
+
+            <View style={styles.field}>
+              <ThemedText style={styles.fieldLabel}>Valor da ficha (R$) *</ThemedText>
+              <TextInput
+                value={valorFicha}
+                onChangeText={setValorFicha}
+                placeholder="1,50"
+                placeholderTextColor={FlowHubColors.darkGray}
+                keyboardType="decimal-pad"
+                style={styles.input}
+              />
+              <ThemedText style={styles.hint} themeColor="textSecondary">
+                Usado no cálculo: diferença × ficha ÷ 2
+              </ThemedText>
             </View>
 
             {displayError ? <ThemedText style={styles.formError}>{displayError}</ThemedText> : null}
@@ -119,6 +150,7 @@ const styles = StyleSheet.create({
   },
   field: { gap: Spacing.one },
   fieldLabel: { fontSize: 14, fontWeight: '600', color: FlowHubColors.navy },
+  hint: { fontSize: 12, lineHeight: 17 },
   input: {
     backgroundColor: FlowHubColors.lightGray,
     borderRadius: Radius.md,

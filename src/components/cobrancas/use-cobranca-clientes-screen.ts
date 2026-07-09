@@ -4,8 +4,10 @@ import { router } from 'expo-router';
 import type { CobrancaViagemFiltro } from '@/components/cobrancas/CobrancaViagemFilters';
 import { parseRouteId } from '@/components/cobrancas/route-utils';
 import {
+  deleteCliente,
   getClientes,
   getCobrancaClientes,
+  removerClienteCobranca,
   toggleClienteCobrado,
   updateCliente,
   vincularClienteCobranca,
@@ -13,6 +15,8 @@ import {
   type CobrancaClienteItem,
   type UpdateClienteInput,
 } from '@/services/api';
+
+export type ClienteEditAction = 'desvincular' | 'excluir' | null;
 
 export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
   const cobrancaId = parseRouteId(cobrancaIdParam) ?? Number.NaN;
@@ -37,6 +41,10 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
   const [confirming, setConfirming] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+
+  const [clienteAction, setClienteAction] = useState<ClienteEditAction>(null);
+  const [clienteActionError, setClienteActionError] = useState<string | null>(null);
+  const [clienteActionLoading, setClienteActionLoading] = useState(false);
 
   const loadData = useCallback(
     async (isRefresh = false) => {
@@ -145,6 +153,72 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
     setEditVisible(true);
   }
 
+  function requestDesvincular() {
+    if (!editItem) return;
+    setEditVisible(false);
+    setClienteActionError(null);
+    setClienteAction('desvincular');
+  }
+
+  function requestExcluir() {
+    if (!editItem) return;
+    setEditVisible(false);
+    setClienteActionError(null);
+    setClienteAction('excluir');
+  }
+
+  function closeClienteAction() {
+    if (clienteActionLoading) return;
+    setClienteAction(null);
+    setClienteActionError(null);
+    setEditItem(null);
+  }
+
+  async function handleConfirmClienteAction() {
+    if (!editItem || !clienteAction) return;
+
+    setClienteActionLoading(true);
+    setClienteActionError(null);
+
+    try {
+      if (clienteAction === 'desvincular') {
+        await removerClienteCobranca(cobrancaId, editItem.cliente.id);
+      } else {
+        await deleteCliente(editItem.cliente.id);
+      }
+      closeClienteAction();
+      await loadData(true);
+    } catch (err) {
+      setClienteActionError(err instanceof Error ? err.message : 'Erro ao processar ação.');
+    } finally {
+      setClienteActionLoading(false);
+    }
+  }
+
+  const clienteActionMeta = useMemo(() => {
+    if (!editItem || !clienteAction) return null;
+
+    const nome = editItem.cliente.nome?.trim() || 'Cliente';
+
+    if (clienteAction === 'desvincular') {
+      return {
+        title: 'Desvincular cliente',
+        message: 'Desvincular',
+        highlight: `${nome} desta cobrança`,
+        hint: 'O cliente permanece cadastrado no sistema e pode ser vinculado novamente depois.',
+        confirmLabel: 'Desvincular',
+      };
+    }
+
+    return {
+      title: 'Excluir cliente',
+      message: 'Excluir',
+      highlight: `${nome} permanentemente`,
+      hint: 'Mesas, leituras e vínculos com cobranças também serão removidos. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+    };
+  }, [editItem, clienteAction]);
+
   async function handleEditSave(data: {
     nome: string;
     cpf: string;
@@ -159,7 +233,7 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
       nome: data.nome.trim(),
       cpf: data.cpf.trim() || null,
       endereco: data.endereco.trim() || null,
-      numero: data.numero.trim() ? Number.parseInt(data.numero.trim(), 10) : null,
+      numero: data.numero.trim() || null,
     };
     setSaving(true);
     setFormError(null);
@@ -211,7 +285,7 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
           nome: data.nome.trim(),
           cpf: data.cpf.trim() || null,
           endereco: data.endereco.trim() || null,
-          numero: data.numero.trim() ? Number.parseInt(data.numero.trim(), 10) : null,
+          numero: data.numero.trim() || null,
           mesas: data.mesas,
         },
       });
@@ -276,5 +350,13 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
     handleCriar,
     goToMesas,
     closeConfirm,
+    requestDesvincular,
+    requestExcluir,
+    clienteActionVisible: clienteAction !== null,
+    clienteActionMeta,
+    clienteActionLoading,
+    clienteActionError,
+    closeClienteAction,
+    handleConfirmClienteAction,
   };
 }

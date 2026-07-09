@@ -34,7 +34,7 @@ type VincularClienteBody = {
 
     nome?: string | null;
 
-    numero?: number | null;
+    numero?: string | null;
 
     endereco?: string | null;
 
@@ -1144,7 +1144,7 @@ router.post('/:id/clientes', async (req: Request, res: Response) => {
 
           nome: body.cliente.nome.trim(),
 
-          numero: body.cliente.numero ?? null,
+          numero: body.cliente.numero?.trim() || null,
 
           endereco: body.cliente.endereco ?? null,
 

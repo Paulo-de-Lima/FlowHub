@@ -148,7 +148,8 @@ export default function ClienteMesasScreen() {
         saving={s.saving}
         error={s.formError}
         initialNumeracao={s.mesaEditNumeracao}
-        title={s.mesaEditMode ? 'Editar numeração' : 'Nova mesa'}
+        initialValorFicha={s.mesaEditValorFicha}
+        title={s.mesaEditMode ? 'Editar mesa' : 'Nova mesa'}
         onClose={s.closeMesaModal}
         onSave={s.handleSaveMesa}
       />
@@ -157,7 +158,7 @@ export default function ClienteMesasScreen() {
         visible={s.leituraModalVisible}
         saving={s.saving}
         error={s.formError}
-        mesaNumeracao={s.mesaAtiva?.numeracao ?? ''}
+        mesa={s.mesaAtiva}
         onClose={s.closeLeituraModal}
         onSave={s.handleSaveLeitura}
       />

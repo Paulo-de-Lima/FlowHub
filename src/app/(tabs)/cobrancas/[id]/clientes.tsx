@@ -8,6 +8,7 @@ import { CobrancaAddClienteModal } from '@/components/cobrancas/CobrancaAddClien
 import { CobrancaClienteCard } from '@/components/cobrancas/CobrancaClienteCard';
 import { CobrancaClientesEmptyState } from '@/components/cobrancas/CobrancaClientesEmptyState';
 import { CobrancaConfirmModal } from '@/components/cobrancas/CobrancaConfirmModal';
+import { ConfirmDeleteModal } from '@/components/cobrancas/ConfirmDeleteModal';
 import { CobrancaEditClienteModal } from '@/components/cobrancas/CobrancaEditClienteModal';
 import { CobrancaViagemFilters } from '@/components/cobrancas/CobrancaViagemFilters';
 import { CobrancaViagemHeader } from '@/components/cobrancas/CobrancaViagemHeader';
@@ -156,6 +157,20 @@ export default function CobrancaClientesScreen() {
         }
         onClose={() => s.setEditVisible(false)}
         onSave={s.handleEditSave}
+        onDesvincular={s.requestDesvincular}
+        onExcluir={s.requestExcluir}
+      />
+      <ConfirmDeleteModal
+        visible={s.clienteActionVisible}
+        title={s.clienteActionMeta?.title ?? 'Confirmar'}
+        message={s.clienteActionMeta?.message ?? ''}
+        highlight={s.clienteActionMeta?.highlight}
+        hint={s.clienteActionMeta?.hint}
+        confirmLabel={s.clienteActionMeta?.confirmLabel}
+        deleting={s.clienteActionLoading}
+        error={s.clienteActionError}
+        onClose={s.closeClienteAction}
+        onConfirm={s.handleConfirmClienteAction}
       />
     </>
   );

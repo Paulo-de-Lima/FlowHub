@@ -11,15 +11,26 @@ import {
   View,
 } from 'react-native';
 
-import { formatCurrency, parseDisplayDateToISO, todayDisplay } from '@/components/cobrancas/cobrancas-utils';
+import {
+  calcularDeveLeitura,
+  calcularDiferencaLeitura,
+  formatCurrency,
+  formatLeituraMedidor,
+  getLeituraAnterior,
+  isRolagemMedidor,
+  MAX_LEITURA,
+  parseDisplayDateToISO,
+  todayDisplay,
+} from '@/components/cobrancas/cobrancas-utils';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
+import type { Mesa } from '@/services/api';
 
 type NovaLeituraModalProps = {
   visible: boolean;
   saving: boolean;
   error: string | null;
-  mesaNumeracao: string;
+  mesa: Mesa | null;
   onClose: () => void;
   onSave: (data: { data_leitura: string; leitura: number; deve: number; valor_pago: number }) => void;
 };
@@ -28,38 +39,60 @@ export function NovaLeituraModal({
   visible,
   saving,
   error,
-  mesaNumeracao,
+  mesa,
   onClose,
   onSave,
 }: NovaLeituraModalProps) {
   const [dataLeitura, setDataLeitura] = useState('');
   const [leitura, setLeitura] = useState('');
-  const [valor, setValor] = useState('');
-  const [valorPago, setValorPago] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
       setDataLeitura(todayDisplay());
       setLeitura('');
-      setValor('');
-      setValorPago('');
       setLocalError(null);
     }
   }, [visible]);
 
-  const valorNum = useMemo(() => {
-    const parsed = Number.parseFloat(valor.trim().replace(',', '.'));
-    return Number.isNaN(parsed) ? 0 : parsed;
-  }, [valor]);
+  const leituraAnterior = useMemo(
+    () => (mesa ? getLeituraAnterior(mesa.registros) : null),
+    [mesa],
+  );
 
-  const valorPagoNum = useMemo(() => {
-    if (!valorPago.trim()) return 0;
-    const parsed = Number.parseFloat(valorPago.trim().replace(',', '.'));
-    return Number.isNaN(parsed) ? 0 : parsed;
-  }, [valorPago]);
+  const valorFicha = mesa?.valor_ficha ?? 1.5;
 
-  const saldo = Math.max(0, valorNum - valorPagoNum);
+  const breakdown = useMemo(() => {
+    const leituraNum = Number.parseInt(leitura.trim(), 10);
+    if (!mesa || Number.isNaN(leituraNum) || leituraNum < 0) {
+      return null;
+    }
+
+    if (leituraAnterior === null) {
+      return {
+        primeiraLeitura: true as const,
+        deve: 0,
+      };
+    }
+
+    const diferenca = calcularDiferencaLeitura(leituraAnterior, leituraNum);
+    const bruto = diferenca * valorFicha;
+    const deve = calcularDeveLeitura(leituraNum, leituraAnterior, valorFicha);
+    const rolagem = isRolagemMedidor(leituraAnterior, leituraNum);
+    const leituraIncomum = !rolagem && diferenca > 5000;
+
+    return {
+      primeiraLeitura: false as const,
+      leituraAnterior,
+      leituraAtual: leituraNum,
+      diferenca,
+      bruto,
+      deve,
+      rolagem,
+      leituraIncomum,
+    };
+  }, [leitura, leituraAnterior, mesa, valorFicha]);
+
   const displayError = localError ?? error;
 
   function handleSave() {
@@ -75,18 +108,8 @@ export function NovaLeituraModal({
       return;
     }
 
-    if (Number.isNaN(valorNum) || valorNum < 0) {
-      setLocalError('Valor deve ser ≥ 0.');
-      return;
-    }
-
-    if (valorPago.trim() && (Number.isNaN(valorPagoNum) || valorPagoNum < 0)) {
-      setLocalError('Valor pago inválido.');
-      return;
-    }
-
-    if (valorPagoNum > valorNum) {
-      setLocalError('O valor pago não pode ser maior que o valor da leitura.');
+    if (!breakdown) {
+      setLocalError('Informe a leitura do medidor.');
       return;
     }
 
@@ -94,8 +117,8 @@ export function NovaLeituraModal({
     onSave({
       data_leitura: iso,
       leitura: leituraNum,
-      deve: valorNum,
-      valor_pago: valorPagoNum,
+      deve: breakdown.deve,
+      valor_pago: 0,
     });
   }
 
@@ -108,7 +131,7 @@ export function NovaLeituraModal({
           <Pressable style={[styles.card, cardShadowSoft]} onPress={(e) => e.stopPropagation()}>
             <ThemedText style={styles.title}>Nova leitura</ThemedText>
             <ThemedText style={styles.context} themeColor="textSecondary">
-              Mesa {mesaNumeracao}
+              Mesa {mesa?.numeracao ?? '—'} · Ficha {formatCurrency(valorFicha)}
             </ThemedText>
 
             <ScrollView
@@ -128,25 +151,56 @@ export function NovaLeituraModal({
                 keyboardType="number-pad"
                 placeholder="Número do medidor"
               />
-              <Field
-                label="Valor (R$)"
-                value={valor}
-                onChange={setValor}
-                keyboardType="decimal-pad"
-                placeholder="0,00"
-              />
-              <Field
-                label="Valor já pago (R$)"
-                value={valorPago}
-                onChange={setValorPago}
-                keyboardType="decimal-pad"
-                placeholder="0,00 — opcional"
-              />
 
-              {valorNum > 0 ? (
-                <ThemedText style={styles.preview} themeColor="textSecondary">
-                  Em aberto após salvar: {formatCurrency(saldo)}
-                </ThemedText>
+              {breakdown ? (
+                <View style={styles.breakdown}>
+                  {breakdown.primeiraLeitura ? (
+                    <ThemedText style={styles.breakdownHint} themeColor="textSecondary">
+                      Primeira leitura desta mesa: valor a cobrar será R$ 0,00. A partir da
+                      próxima leitura o valor será calculado automaticamente.
+                    </ThemedText>
+                  ) : (
+                    <>
+                      <ThemedText style={styles.breakdownTitle}>Cálculo</ThemedText>
+                      {breakdown.rolagem ? (
+                        <>
+                          <ThemedText style={styles.rolagemHint}>
+                            Rolagem do medidor detectada (99999 → 00000)
+                          </ThemedText>
+                          <ThemedText style={styles.breakdownLine} themeColor="textSecondary">
+                            ({formatLeituraMedidor(breakdown.leituraAnterior)} →{' '}
+                            {formatLeituraMedidor(breakdown.leituraAtual)}, rolagem) ={' '}
+                            {breakdown.diferenca} fichas
+                          </ThemedText>
+                          <ThemedText style={styles.breakdownLine} themeColor="textSecondary">
+                            ({MAX_LEITURA} − {breakdown.leituraAnterior} + 1) +{' '}
+                            {breakdown.leituraAtual} = {breakdown.diferenca}
+                          </ThemedText>
+                        </>
+                      ) : (
+                        <ThemedText style={styles.breakdownLine} themeColor="textSecondary">
+                          Diferença: {breakdown.leituraAtual} − {breakdown.leituraAnterior} ={' '}
+                          {breakdown.diferenca}
+                        </ThemedText>
+                      )}
+                      <ThemedText style={styles.breakdownLine} themeColor="textSecondary">
+                        Bruto: {breakdown.diferenca} × {formatCurrency(valorFicha)} ={' '}
+                        {formatCurrency(breakdown.bruto)}
+                      </ThemedText>
+                      <ThemedText style={styles.breakdownLine} themeColor="textSecondary">
+                        ÷ 2 = {formatCurrency(breakdown.deve)}
+                      </ThemedText>
+                      <ThemedText style={styles.breakdownTotal}>
+                        Valor a cobrar: {formatCurrency(breakdown.deve)}
+                      </ThemedText>
+                      {breakdown.leituraIncomum ? (
+                        <ThemedText style={styles.avisoLeitura}>
+                          Leitura incomum — confira se digitou corretamente.
+                        </ThemedText>
+                      ) : null}
+                    </>
+                  )}
+                </View>
               ) : null}
 
               {displayError ? <ThemedText style={styles.formError}>{displayError}</ThemedText> : null}
@@ -238,7 +292,40 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8EE',
   },
-  preview: { fontSize: 13, fontWeight: '600' },
+  breakdown: {
+    backgroundColor: FlowHubColors.lightGray,
+    borderRadius: Radius.md,
+    padding: Spacing.three,
+    gap: Spacing.one,
+  },
+  breakdownTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: FlowHubColors.navy,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  breakdownLine: { fontSize: 13, lineHeight: 19 },
+  breakdownTotal: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: FlowHubColors.navy,
+    marginTop: Spacing.one,
+  },
+  breakdownHint: { fontSize: 13, lineHeight: 19 },
+  rolagemHint: {
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+    color: FlowHubColors.petroleum,
+  },
+  avisoLeitura: {
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+    color: '#B45309',
+    marginTop: Spacing.one,
+  },
   formError: { color: FlowHubColors.petroleum, fontSize: 14 },
   saveBtn: {
     backgroundColor: FlowHubColors.navy,

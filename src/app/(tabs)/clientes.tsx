@@ -97,13 +97,8 @@ export default function ClientesScreen() {
       nome: nome.trim(),
       cpf: cpf.trim() || null,
       endereco: endereco.trim() || null,
-      numero: numero.trim() ? Number.parseInt(numero.trim(), 10) : null,
+      numero: numero.trim() || null,
     };
-
-    if (numero.trim() && Number.isNaN(payload.numero)) {
-      setFormError('Número inválido.');
-      return;
-    }
 
     setSaving(true);
     setFormError(null);

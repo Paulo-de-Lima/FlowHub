@@ -82,12 +82,10 @@ export function formatIntervaloDias(dias: number) {
 
 
 
-export function formatTelefone(numero: number | null | undefined) {
-
-  if (numero == null) return '—';
+export function formatTelefone(numero: string | number | null | undefined) {
+  if (numero == null || numero === '') return '—';
 
   return String(numero);
-
 }
 
 
@@ -115,5 +113,66 @@ export function getClienteInitials(nome: string | null | undefined) {
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
 
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+export function arredondarMoeda(valor: number): number {
+  return Math.round(valor * 100) / 100;
+}
+
+export const MAX_LEITURA = 99999;
+export const MODULO_LEITURA = 100000;
+
+export function calcularDiferencaLeitura(anterior: number, atual: number): number {
+  if (atual >= anterior) {
+    return atual - anterior;
+  }
+
+  return MAX_LEITURA - anterior + 1 + atual;
+}
+
+export function calcularDeveLeitura(
+  leituraAtual: number,
+  leituraAnterior: number | null,
+  valorFicha: number,
+): number {
+  if (leituraAnterior === null) {
+    return 0;
+  }
+
+  const diferenca = calcularDiferencaLeitura(leituraAnterior, leituraAtual);
+  const bruto = diferenca * valorFicha;
+  return arredondarMoeda(bruto / 2);
+}
+
+export function isRolagemMedidor(anterior: number, atual: number): boolean {
+  return atual < anterior;
+}
+
+export function formatLeituraMedidor(valor: number): string {
+  return String(valor).padStart(5, '0');
+}
+
+export function getLeituraAnterior(registros: { leitura: number; data_leitura: string }[]) {
+  if (registros.length === 0) return null;
+
+  const ordenados = [...registros].sort((a, b) => {
+    const cmp = b.data_leitura.localeCompare(a.data_leitura);
+    return cmp !== 0 ? cmp : 0;
+  });
+
+  return ordenados[0]?.leitura ?? null;
+}
+
+export const VALOR_FICHA_PADRAO = 1.5;
+
+export function formatValorFichaInput(valor: number): string {
+  return valor.toFixed(2).replace('.', ',');
+}
+
+export function parseValorFichaInput(text: string): number | null {
+  const trimmed = text.trim().replace(',', '.');
+  if (!trimmed) return null;
+  const parsed = Number.parseFloat(trimmed);
+  return Number.isNaN(parsed) || parsed < 0 ? null : parsed;
 }
 

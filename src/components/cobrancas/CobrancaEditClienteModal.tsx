@@ -19,8 +19,12 @@ type CobrancaEditClienteModalProps = {
   saving: boolean;
   error: string | null;
   initial: { nome: string; cpf: string; endereco: string; numero: string } | null;
+  unlinking?: boolean;
+  deleting?: boolean;
   onClose: () => void;
   onSave: (data: { nome: string; cpf: string; endereco: string; numero: string }) => void;
+  onDesvincular?: () => void;
+  onExcluir?: () => void;
 };
 
 export function CobrancaEditClienteModal({
@@ -28,13 +32,19 @@ export function CobrancaEditClienteModal({
   saving,
   error,
   initial,
+  unlinking = false,
+  deleting = false,
   onClose,
   onSave,
+  onDesvincular,
+  onExcluir,
 }: CobrancaEditClienteModalProps) {
   const [nome, setNome] = React.useState('');
   const [cpf, setCpf] = React.useState('');
   const [endereco, setEndereco] = React.useState('');
   const [numero, setNumero] = React.useState('');
+
+  const busy = saving || unlinking || deleting;
 
   React.useEffect(() => {
     if (visible && initial) {
@@ -68,14 +78,35 @@ export function CobrancaEditClienteModal({
 
             {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
 
+            {onDesvincular || onExcluir ? (
+              <View style={styles.secondaryActions}>
+                {onDesvincular ? (
+                  <Pressable
+                    style={[styles.secondaryBtn, busy && styles.btnDisabled]}
+                    onPress={onDesvincular}
+                    disabled={busy}>
+                    <ThemedText style={styles.secondaryBtnText}>Desvincular da cobrança</ThemedText>
+                  </Pressable>
+                ) : null}
+                {onExcluir ? (
+                  <Pressable
+                    style={[styles.destructiveBtn, busy && styles.btnDisabled]}
+                    onPress={onExcluir}
+                    disabled={busy}>
+                    <ThemedText style={styles.destructiveBtnText}>Excluir cliente</ThemedText>
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+
             <View style={styles.actions}>
-              <Pressable style={styles.cancelBtn} onPress={onClose} disabled={saving}>
+              <Pressable style={styles.cancelBtn} onPress={onClose} disabled={busy}>
                 <ThemedText style={styles.cancelText}>Cancelar</ThemedText>
               </Pressable>
               <Pressable
-                style={[styles.saveBtn, saving && styles.btnDisabled]}
+                style={[styles.saveBtn, busy && styles.btnDisabled]}
                 onPress={() => onSave({ nome, cpf, endereco, numero })}
-                disabled={saving}>
+                disabled={busy}>
                 {saving ? (
                   <ActivityIndicator color={FlowHubColors.white} />
                 ) : (
@@ -150,6 +181,25 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8EE',
   },
   error: { color: FlowHubColors.petroleum, fontSize: 14 },
+  secondaryActions: { gap: Spacing.two, marginTop: Spacing.one },
+  secondaryBtn: {
+    borderRadius: Radius.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: FlowHubColors.lightGray,
+    borderWidth: 1,
+    borderColor: '#E2E8EE',
+  },
+  secondaryBtnText: { color: FlowHubColors.petroleum, fontWeight: '700', fontSize: 15 },
+  destructiveBtn: {
+    borderRadius: Radius.md,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: '#FDEBEA',
+    borderWidth: 1,
+    borderColor: '#F5C6C3',
+  },
+  destructiveBtnText: { color: '#C0392B', fontWeight: '700', fontSize: 15 },
   actions: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.two },
   cancelBtn: {
     flex: 1,

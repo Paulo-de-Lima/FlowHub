@@ -33,6 +33,7 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
   const [mesaEditMode, setMesaEditMode] = useState(false);
   const [mesaEditId, setMesaEditId] = useState<number | null>(null);
   const [mesaEditNumeracao, setMesaEditNumeracao] = useState('');
+  const [mesaEditValorFicha, setMesaEditValorFicha] = useState(1.5);
 
   const [leituraModalVisible, setLeituraModalVisible] = useState(false);
   const [mesaAtiva, setMesaAtiva] = useState<Mesa | null>(null);
@@ -105,6 +106,7 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     setMesaEditMode(false);
     setMesaEditId(null);
     setMesaEditNumeracao('');
+    setMesaEditValorFicha(1.5);
     setFormError(null);
     setMesaModalVisible(true);
   }
@@ -113,6 +115,7 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     setMesaEditMode(true);
     setMesaEditId(mesa.id);
     setMesaEditNumeracao(mesa.numeracao);
+    setMesaEditValorFicha(mesa.valor_ficha);
     setFormError(null);
     setMesaModalVisible(true);
   }
@@ -137,7 +140,7 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     setExpandedId((prev) => (prev === mesaId ? null : mesaId));
   }
 
-  async function handleSaveMesa(numeracao: string) {
+  async function handleSaveMesa(data: { numeracao: string; valor_ficha: number }) {
     if (clienteIdNum === null) return;
 
     setSaving(true);
@@ -145,9 +148,9 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
 
     try {
       if (mesaEditMode && mesaEditId !== null) {
-        await updateMesa(mesaEditId, numeracao);
+        await updateMesa(mesaEditId, data);
       } else {
-        await createMesa(clienteIdNum, numeracao);
+        await createMesa(clienteIdNum, data);
       }
       setMesaModalVisible(false);
       await loadData(true);
@@ -296,6 +299,7 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     mesaModalVisible,
     mesaEditMode,
     mesaEditNumeracao,
+    mesaEditValorFicha,
     leituraModalVisible,
     mesaAtiva,
     pagamentoModalVisible,

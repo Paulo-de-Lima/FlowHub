@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 
+import { calcularDeveLeitura, deveDiverge } from '../lib/calcular-deve-leitura';
 import { isForeignKeyError, isNotFoundError, parseDateInput, parseId, serializeDecimal } from '../lib/http';
 import { normalizarPagamento } from '../lib/registro-pagamento';
 import { prisma } from '../lib/prisma';
@@ -8,6 +9,7 @@ const router = Router();
 
 type MesaBody = {
   numeracao?: string;
+  valor_ficha?: number;
 };
 
 type RegistroBody = {
@@ -44,6 +46,7 @@ function mapMesa(mesa: {
   id: number;
   cliente_id: number;
   numeracao: string;
+  valor_ficha: unknown;
   registros_mesa: {
     id: number;
     mesa_id: number;
@@ -62,10 +65,27 @@ function mapMesa(mesa: {
     id: mesa.id,
     cliente_id: mesa.cliente_id,
     numeracao: mesa.numeracao,
+    valor_ficha: serializeDecimal(mesa.valor_ficha),
     registros,
     totalDeve,
     totalPago,
   };
+}
+
+function parseValorFicha(value: unknown): number | null {
+  if (value === undefined || value === null) return null;
+  const num = Number(value);
+  if (Number.isNaN(num) || num < 0) return null;
+  return num;
+}
+
+async function getLeituraAnterior(mesaId: number) {
+  const anterior = await prisma.registros_mesa.findFirst({
+    where: { mesa_id: mesaId },
+    orderBy: [{ data_leitura: 'desc' }, { id: 'desc' }],
+    select: { leitura: true },
+  });
+  return anterior?.leitura ?? null;
 }
 
 function resolveValorPagoInput(body: RegistroBody, deve: number): number {
@@ -125,9 +145,19 @@ router.post('/clientes/:clienteId/mesas', async (req: Request, res: Response) =>
     return;
   }
 
+  const valorFicha = parseValorFicha(body.valor_ficha);
+  if (body.valor_ficha !== undefined && valorFicha === null) {
+    res.status(400).json({ error: 'Valor da ficha inválido.' });
+    return;
+  }
+
   try {
     const mesa = await prisma.mesas.create({
-      data: { cliente_id: clienteId, numeracao: body.numeracao.trim() },
+      data: {
+        cliente_id: clienteId,
+        numeracao: body.numeracao.trim(),
+        ...(valorFicha !== null ? { valor_ficha: valorFicha } : {}),
+      },
       include: { registros_mesa: true },
     });
 
@@ -151,10 +181,19 @@ router.put('/mesas/:id', async (req: Request, res: Response) => {
 
   const body = req.body as MesaBody;
 
+  const valorFicha = parseValorFicha(body.valor_ficha);
+  if (body.valor_ficha !== undefined && valorFicha === null) {
+    res.status(400).json({ error: 'Valor da ficha inválido.' });
+    return;
+  }
+
   try {
     const mesa = await prisma.mesas.update({
       where: { id },
-      data: { numeracao: body.numeracao?.trim() },
+      data: {
+        numeracao: body.numeracao?.trim(),
+        ...(valorFicha !== null ? { valor_ficha: valorFicha } : {}),
+      },
       include: { registros_mesa: { orderBy: { data_leitura: 'desc' } } },
     });
 
@@ -205,19 +244,43 @@ router.post('/mesas/:mesaId/registros', async (req: Request, res: Response) => {
   const body = req.body as RegistroBody;
   const dataLeitura = parseDateInput(body.data_leitura);
 
-  if (!dataLeitura || body.leitura === undefined || body.deve === undefined) {
-    res.status(400).json({ error: 'Data, leitura e valor deve são obrigatórios.' });
+  if (!dataLeitura || body.leitura === undefined) {
+    res.status(400).json({ error: 'Data e leitura são obrigatórios.' });
     return;
   }
 
-  if (body.leitura < 0 || body.deve < 0) {
-    res.status(400).json({ error: 'Leitura e valor devem ser ≥ 0.' });
+  if (body.leitura < 0) {
+    res.status(400).json({ error: 'Leitura deve ser ≥ 0.' });
     return;
   }
-
-  const pagamento = normalizarPagamento(body.deve, resolveValorPagoInput(body, body.deve));
 
   try {
+    const mesa = await prisma.mesas.findUnique({ where: { id: mesaId } });
+    if (!mesa) {
+      res.status(404).json({ error: 'Mesa não encontrada.' });
+      return;
+    }
+
+    const leituraAnterior = await getLeituraAnterior(mesaId);
+    const valorFicha = serializeDecimal(mesa.valor_ficha);
+    const deveCalculado = calcularDeveLeitura(body.leitura, leituraAnterior, valorFicha);
+
+    if (body.deve !== undefined && deveDiverge(deveCalculado, body.deve)) {
+      res.status(400).json({
+        error: `Valor deve diverge do cálculo esperado (${deveCalculado.toFixed(2).replace('.', ',')}).`,
+      });
+      return;
+    }
+
+    const deve = body.deve !== undefined ? body.deve : deveCalculado;
+
+    if (deve < 0) {
+      res.status(400).json({ error: 'Valor deve ser ≥ 0.' });
+      return;
+    }
+
+    const pagamento = normalizarPagamento(deve, resolveValorPagoInput(body, deve));
+
     const registro = await prisma.registros_mesa.create({
       data: {
         mesa_id: mesaId,

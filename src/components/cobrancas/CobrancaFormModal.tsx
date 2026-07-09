@@ -284,8 +284,6 @@ export function CobrancaFormModal({
 
             {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
 
-
-
             <View style={styles.actions}>
 
               <Pressable style={styles.cancelBtn} onPress={onClose} disabled={saving}>

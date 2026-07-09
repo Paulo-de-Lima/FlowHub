@@ -13,6 +13,7 @@ type ConfirmDeleteModalProps = {
   deleting: boolean;
   error: string | null;
   confirmDisabled?: boolean;
+  confirmLabel?: string;
   onClose: () => void;
   onConfirm: () => void;
 };
@@ -26,6 +27,7 @@ export function ConfirmDeleteModal({
   deleting,
   error,
   confirmDisabled = false,
+  confirmLabel = 'Excluir',
   onClose,
   onConfirm,
 }: ConfirmDeleteModalProps) {
@@ -72,7 +74,7 @@ export function ConfirmDeleteModal({
               {deleting ? (
                 <ActivityIndicator color={FlowHubColors.white} />
               ) : (
-                <ThemedText style={styles.deleteText}>Excluir</ThemedText>
+                <ThemedText style={styles.deleteText}>{confirmLabel}</ThemedText>
               )}
             </Pressable>
           </View>

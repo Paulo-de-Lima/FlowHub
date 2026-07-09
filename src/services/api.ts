@@ -3,14 +3,14 @@ import { Platform } from 'react-native';
 export type Cliente = {
   id: number;
   nome: string | null;
-  numero: number | null;
+  numero: string | null;
   endereco: string | null;
   cpf: string | null;
 };
 
 export type ClienteInput = {
   nome?: string | null;
-  numero?: number | null;
+  numero?: string | null;
   endereco?: string | null;
   cpf?: string | null;
 };
@@ -163,7 +163,7 @@ export type VincularClienteInput =
   | {
       cliente: {
         nome: string;
-        numero?: number | null;
+        numero?: string | null;
         endereco?: string | null;
         cpf?: string | null;
         qtdMesas?: number;
@@ -247,9 +247,15 @@ export type Mesa = {
   id: number;
   cliente_id: number;
   numeracao: string;
+  valor_ficha: number;
   registros: RegistroMesa[];
   totalDeve: number;
   totalPago: number;
+};
+
+export type MesaInput = {
+  numeracao: string;
+  valor_ficha?: number;
 };
 
 export type MesasResponse = {
@@ -260,7 +266,7 @@ export type MesasResponse = {
 export type RegistroInput = {
   data_leitura: string;
   leitura: number;
-  deve: number;
+  deve?: number;
   valor_pago?: number;
   pago?: boolean;
 };
@@ -269,17 +275,17 @@ export async function getClienteMesas(clienteId: number): Promise<MesasResponse>
   return request<MesasResponse>(`/clientes/${clienteId}/mesas`);
 }
 
-export async function createMesa(clienteId: number, numeracao: string): Promise<Mesa> {
+export async function createMesa(clienteId: number, data: MesaInput): Promise<Mesa> {
   return request<Mesa>(`/clientes/${clienteId}/mesas`, {
     method: 'POST',
-    body: JSON.stringify({ numeracao }),
+    body: JSON.stringify(data),
   });
 }
 
-export async function updateMesa(id: number, numeracao: string): Promise<Mesa> {
+export async function updateMesa(id: number, data: MesaInput): Promise<Mesa> {
   return request<Mesa>(`/mesas/${id}`, {
     method: 'PUT',
-    body: JSON.stringify({ numeracao }),
+    body: JSON.stringify(data),
   });
 }
 

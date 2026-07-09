@@ -1,15 +1,22 @@
 import { Router, type Request, type Response } from 'express';
 
+import { excluirClienteComDependencias } from '../lib/excluir-cliente';
 import { prisma } from '../lib/prisma';
 
 const router = Router();
 
 type ClienteBody = {
   nome?: string | null;
-  numero?: number | null;
+  numero?: string | null;
   endereco?: string | null;
   cpf?: string | null;
 };
+
+function normalizeTelefone(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  const text = String(value).trim();
+  return text || null;
+}
 
 function parseId(value: string | string[]): number | null {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -59,7 +66,7 @@ router.post('/', async (req: Request, res: Response) => {
     const cliente = await prisma.clientes.create({
       data: {
         nome: body.nome ?? null,
-        numero: body.numero ?? null,
+        numero: normalizeTelefone(body.numero),
         endereco: body.endereco ?? null,
         cpf: body.cpf ?? null,
       },
@@ -87,7 +94,7 @@ router.put('/:id', async (req: Request, res: Response) => {
       where: { id },
       data: {
         nome: body.nome,
-        numero: body.numero,
+        numero: normalizeTelefone(body.numero),
         endereco: body.endereco,
         cpf: body.cpf,
       },
@@ -114,18 +121,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 
   try {
-    await prisma.clientes.delete({ where: { id } });
+    await excluirClienteComDependencias(id);
     res.status(204).send();
   } catch (error) {
     if (isNotFoundError(error)) {
       res.status(404).json({ error: 'Cliente não encontrado.' });
-      return;
-    }
-
-    if (isForeignKeyError(error)) {
-      res.status(409).json({
-        error: 'Cliente vinculado a cobranças e não pode ser removido.',
-      });
       return;
     }
 
@@ -140,15 +140,6 @@ function isNotFoundError(error: unknown) {
     error !== null &&
     'code' in error &&
     (error as { code: string }).code === 'P2025'
-  );
-}
-
-function isForeignKeyError(error: unknown) {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code: string }).code === 'P2003'
   );
 }
 

@@ -11,7 +11,7 @@ datasource db {
 model clientes {
   id                Int                 @id @default(autoincrement())
   nome              String?             @db.VarChar(100)
-  numero            Int?
+  numero            String?             @db.VarChar(20)
   endereco          String?             @db.VarChar(300)
   cpf               String?             @db.VarChar(14)
   cobranca_clientes cobranca_clientes[]
@@ -65,6 +65,7 @@ model mesas {
   id             Int              @id @default(autoincrement())
   cliente_id     Int
   numeracao      String           @db.VarChar(100)
+  valor_ficha    Decimal          @default(1.50) @db.Decimal(10, 2)
   clientes       clientes         @relation(fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "mesas_ibfk_1")
   registros_mesa registros_mesa[]
 
