@@ -42,6 +42,8 @@ export function CobrancaViagemFilters({
         ))}
       </View>
 
+      <ThemedText style={styles.sectionTitle}>Clientes desta viagem</ThemedText>
+
       <View style={styles.searchWrap}>
         <SymbolView
           name={{ ios: 'magnifyingglass', android: 'search', web: 'search' }}
@@ -56,8 +58,6 @@ export function CobrancaViagemFilters({
           style={styles.search}
         />
       </View>
-
-      <ThemedText style={styles.sectionTitle}>Clientes desta viagem</ThemedText>
     </View>
   );
 }

@@ -79,13 +79,72 @@ function parseValorFicha(value: unknown): number | null {
   return num;
 }
 
-async function getLeituraAnterior(mesaId: number) {
+async function getLeituraAnterior(mesaId: number, excluirId?: number) {
   const anterior = await prisma.registros_mesa.findFirst({
-    where: { mesa_id: mesaId },
+    where: {
+      mesa_id: mesaId,
+      ...(excluirId != null ? { id: { not: excluirId } } : {}),
+    },
     orderBy: [{ data_leitura: 'desc' }, { id: 'desc' }],
     select: { leitura: true },
   });
   return anterior?.leitura ?? null;
+}
+
+async function getLeituraAnteriorParaRegistro(
+  mesaId: number,
+  excluirId: number,
+  dataLeitura: Date,
+  registroId: number,
+) {
+  const anterior = await prisma.registros_mesa.findFirst({
+    where: {
+      mesa_id: mesaId,
+      id: { not: excluirId },
+      OR: [
+        { data_leitura: { lt: dataLeitura } },
+        { data_leitura: dataLeitura, id: { lt: registroId } },
+      ],
+    },
+    orderBy: [{ data_leitura: 'desc' }, { id: 'desc' }],
+    select: { leitura: true },
+  });
+  return anterior?.leitura ?? null;
+}
+
+async function recalcularRegistrosPosteriores(
+  mesaId: number,
+  valorFicha: number,
+  afterData: Date,
+  afterId: number,
+  leituraAnteriorBase: number,
+) {
+  const posteriores = await prisma.registros_mesa.findMany({
+    where: {
+      mesa_id: mesaId,
+      OR: [
+        { data_leitura: { gt: afterData } },
+        { data_leitura: afterData, id: { gt: afterId } },
+      ],
+    },
+    orderBy: [{ data_leitura: 'asc' }, { id: 'asc' }],
+  });
+
+  let leituraAnterior = leituraAnteriorBase;
+  for (const reg of posteriores) {
+    const deveCalc = calcularDeveLeitura(reg.leitura, leituraAnterior, valorFicha);
+    const valorPagoAtual = serializeDecimal(reg.valor_pago);
+    const pagamento = normalizarPagamento(deveCalc, Math.min(valorPagoAtual, deveCalc));
+    await prisma.registros_mesa.update({
+      where: { id: reg.id },
+      data: {
+        deve: pagamento.deve,
+        valor_pago: pagamento.valor_pago,
+        pago: pagamento.pago,
+      },
+    });
+    leituraAnterior = reg.leitura;
+  }
 }
 
 function resolveValorPagoInput(body: RegistroBody, deve: number): number {
@@ -216,13 +275,10 @@ router.delete('/mesas/:id', async (req: Request, res: Response) => {
   }
 
   try {
-    const count = await prisma.registros_mesa.count({ where: { mesa_id: id } });
-    if (count > 0) {
-      res.status(409).json({ error: 'Mesa possui registros e não pode ser excluída.' });
-      return;
-    }
-
-    await prisma.mesas.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.registros_mesa.deleteMany({ where: { mesa_id: id } }),
+      prisma.mesas.delete({ where: { id } }),
+    ]);
     res.status(204).send();
   } catch (error) {
     if (isNotFoundError(error)) {
@@ -329,6 +385,71 @@ router.put('/registros/:id', async (req: Request, res: Response) => {
       return;
     }
 
+    const mesa = await prisma.mesas.findUnique({ where: { id: atual.mesa_id } });
+    if (!mesa) {
+      res.status(404).json({ error: 'Mesa não encontrada.' });
+      return;
+    }
+
+    const valorFicha = serializeDecimal(mesa.valor_ficha);
+    const recalcularLeitura = body.leitura !== undefined || body.data_leitura !== undefined;
+
+    if (recalcularLeitura) {
+      const novaData = body.data_leitura
+        ? (parseDateInput(body.data_leitura) ?? atual.data_leitura)
+        : atual.data_leitura;
+      const novaLeitura = body.leitura !== undefined ? body.leitura : atual.leitura;
+
+      if (novaLeitura < 0 || novaLeitura > 99999) {
+        res.status(400).json({ error: 'Leitura deve estar entre 0 e 99999.' });
+        return;
+      }
+
+      const leituraAnterior = await getLeituraAnteriorParaRegistro(
+        atual.mesa_id,
+        id,
+        novaData,
+        id,
+      );
+      const deveCalculado = calcularDeveLeitura(novaLeitura, leituraAnterior, valorFicha);
+
+      if (body.deve !== undefined && deveDiverge(deveCalculado, body.deve)) {
+        res.status(400).json({
+          error: `Valor deve diverge do cálculo esperado (${deveCalculado.toFixed(2).replace('.', ',')}).`,
+        });
+        return;
+      }
+
+      const deve = body.deve !== undefined ? body.deve : deveCalculado;
+      const valorPagoInput =
+        body.valor_pago !== undefined
+          ? body.valor_pago
+          : Math.min(serializeDecimal(atual.valor_pago), deve);
+      const pagamento = normalizarPagamento(deve, valorPagoInput);
+
+      const registro = await prisma.registros_mesa.update({
+        where: { id },
+        data: {
+          data_leitura: novaData,
+          leitura: novaLeitura,
+          deve: pagamento.deve,
+          valor_pago: pagamento.valor_pago,
+          pago: pagamento.pago,
+        },
+      });
+
+      await recalcularRegistrosPosteriores(
+        atual.mesa_id,
+        valorFicha,
+        novaData,
+        id,
+        novaLeitura,
+      );
+
+      res.json(mapRegistro(registro));
+      return;
+    }
+
     const deve = body.deve !== undefined ? body.deve : serializeDecimal(atual.deve);
     const valorPagoInput =
       body.valor_pago !== undefined
@@ -342,8 +463,6 @@ router.put('/registros/:id', async (req: Request, res: Response) => {
     const registro = await prisma.registros_mesa.update({
       where: { id },
       data: {
-        data_leitura: body.data_leitura ? (parseDateInput(body.data_leitura) ?? undefined) : undefined,
-        leitura: body.leitura,
         deve: pagamento.deve,
         valor_pago: pagamento.valor_pago,
         pago: pagamento.pago,

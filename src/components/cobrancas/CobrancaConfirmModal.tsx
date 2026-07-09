@@ -1,12 +1,14 @@
 import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
+import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
 
 type CobrancaConfirmModalProps = {
   visible: boolean;
   nome: string;
+  totalDeve?: number;
   confirming: boolean;
   error: string | null;
   onClose: () => void;
@@ -16,11 +18,14 @@ type CobrancaConfirmModalProps = {
 export function CobrancaConfirmModal({
   visible,
   nome,
+  totalDeve = 0,
   confirming,
   error,
   onClose,
   onConfirm,
 }: CobrancaConfirmModalProps) {
+  const temDivida = totalDeve > 0;
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
@@ -33,15 +38,31 @@ export function CobrancaConfirmModal({
             />
           </View>
 
-          <ThemedText style={styles.title}>Marcar como cobrado?</ThemedText>
+          <ThemedText style={styles.title}>
+            {temDivida ? 'Marcar como recebido na viagem?' : 'Marcar como cobrado?'}
+          </ThemedText>
 
           <ThemedText style={styles.message} themeColor="textSecondary">
-            Confirmar que você já cobrou{' '}
-            <ThemedText style={styles.highlight}>{nome}</ThemedText> nesta viagem?
+            {temDivida ? (
+              <>
+                Este cliente ainda tem{' '}
+                <ThemedText style={styles.highlight}>{formatCurrency(totalDeve)}</ThemedText> em
+                registros pendentes. Deseja marcar{' '}
+                <ThemedText style={styles.highlight}>{nome}</ThemedText> como recebido na viagem
+                mesmo assim?
+              </>
+            ) : (
+              <>
+                Confirmar que você já cobrou{' '}
+                <ThemedText style={styles.highlight}>{nome}</ThemedText> nesta viagem?
+              </>
+            )}
           </ThemedText>
 
           <ThemedText style={styles.hint} themeColor="textSecondary">
-            Isso não altera os registros das mesas.
+            {temDivida
+              ? 'Isso indica recebimento na rota, mas não quita os registros das mesas.'
+              : 'Isso não altera os registros das mesas.'}
           </ThemedText>
 
           {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
@@ -57,7 +78,9 @@ export function CobrancaConfirmModal({
               {confirming ? (
                 <ActivityIndicator color={FlowHubColors.white} />
               ) : (
-                <ThemedText style={styles.confirmText}>Confirmar</ThemedText>
+                <ThemedText style={styles.confirmText}>
+                  {temDivida ? 'Marcar mesmo assim' : 'Confirmar'}
+                </ThemedText>
               )}
             </Pressable>
           </View>

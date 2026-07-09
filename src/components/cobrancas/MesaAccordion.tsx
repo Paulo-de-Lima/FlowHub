@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { formatCurrency, saldoRegistro } from '@/components/cobrancas/cobrancas-utils';
+import { formatCurrency, saldoRegistro, sortRegistrosCronologico, isRegistroMaisRecente } from '@/components/cobrancas/cobrancas-utils';
 import { RegistroCard } from '@/components/cobrancas/RegistroCard';
 import { ThemedText } from '@/components/themed-text';
 import {
@@ -16,6 +16,7 @@ import {
   FlowHubColors,
   QuickActionColors,
   Radius,
+  SemanticColors,
   Spacing,
 } from '@/constants/theme';
 import type { Mesa, RegistroMesa } from '@/services/api';
@@ -25,6 +26,7 @@ type MesaAccordionProps = {
   expanded: boolean;
   onToggle: () => void;
   onNovaLeitura: () => void;
+  onEditRegistro: (registro: RegistroMesa) => void;
   onRegistrarPagamento: (registro: RegistroMesa) => void;
   onDeleteRegistro: (registro: RegistroMesa) => void;
   onDeleteMesa?: () => void;
@@ -36,6 +38,7 @@ export function MesaAccordion({
   expanded,
   onToggle,
   onNovaLeitura,
+  onEditRegistro,
   onRegistrarPagamento,
   onDeleteRegistro,
   onDeleteMesa,
@@ -56,6 +59,8 @@ export function MesaAccordion({
   const registrosLabel =
     registrosCount === 1 ? '1 registro' : `${registrosCount} registros`;
   const temPendente = pendentesCount > 0;
+
+  const registrosOrdenados = sortRegistrosCronologico(mesa.registros);
 
   return (
     <View style={[styles.card, cardShadowSoft, expanded && styles.cardExpanded]}>
@@ -86,8 +91,7 @@ export function MesaAccordion({
             ) : null}
           </View>
           <ThemedText style={styles.subtitle}>
-            <ThemedText style={styles.deveHighlight}>Deve {formatCurrency(mesa.totalDeve)}</ThemedText>
-            {' · '}
+            Ficha {formatCurrency(mesa.valor_ficha)} · Deve {formatCurrency(mesa.totalDeve)} ·{' '}
             {registrosLabel}
           </ThemedText>
         </View>
@@ -144,14 +148,30 @@ export function MesaAccordion({
               </Pressable>
             </View>
           ) : (
-            mesa.registros.map((reg) => (
-              <RegistroCard
-                key={reg.id}
-                registro={reg}
-                onRegistrarPagamento={() => onRegistrarPagamento(reg)}
-                onDelete={() => onDeleteRegistro(reg)}
-              />
-            ))
+            <View style={styles.timeline}>
+              {registrosOrdenados.map((reg, index) => {
+                const isAtual = isRegistroMaisRecente(reg, mesa.registros);
+                const isLast = index === registrosOrdenados.length - 1;
+                return (
+                  <View key={reg.id} style={styles.timelineItem}>
+                    <View style={styles.timelineRail}>
+                      <View style={[styles.timelineDot, isAtual && styles.timelineDotAtual]} />
+                      {!isLast ? <View style={styles.timelineLine} /> : null}
+                    </View>
+                    <View style={styles.timelineContent}>
+                      <RegistroCard
+                        registro={reg}
+                        isAtual={isAtual}
+                        compact={!isAtual}
+                        onEditar={() => onEditRegistro(reg)}
+                        onRegistrarPagamento={() => onRegistrarPagamento(reg)}
+                        onDelete={() => onDeleteRegistro(reg)}
+                      />
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
           )}
 
           {mesa.registros.length > 0 ? (
@@ -295,6 +315,37 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     gap: Spacing.two,
   },
+  timeline: { gap: 0 },
+  timelineItem: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  timelineRail: {
+    width: 16,
+    alignItems: 'center',
+  },
+  timelineDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: SemanticColors.borderSubtle,
+    marginTop: 14,
+  },
+  timelineDotAtual: {
+    backgroundColor: FlowHubColors.turquoise,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  timelineLine: {
+    flex: 1,
+    width: 2,
+    backgroundColor: SemanticColors.borderSubtle,
+    marginTop: 4,
+    marginBottom: -4,
+    minHeight: 24,
+  },
+  timelineContent: { flex: 1, paddingBottom: Spacing.two },
   emptyWrap: {
     alignItems: 'center',
     gap: Spacing.two,

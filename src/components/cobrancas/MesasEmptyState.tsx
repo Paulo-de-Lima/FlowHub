@@ -2,7 +2,7 @@ import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { FlowHubColors, Radius, Spacing } from '@/constants/theme';
+import { FlowHubColors, QuickActionColors, Radius, Spacing } from '@/constants/theme';
 
 type MesasEmptyStateProps = {
   onAdd: () => void;
@@ -14,13 +14,13 @@ export function MesasEmptyState({ onAdd }: MesasEmptyStateProps) {
       <View style={styles.iconWrap}>
         <SymbolView
           name={{ ios: 'tablecells.fill', android: 'grid_on', web: 'grid_on' }}
-          size={36}
+          size={44}
           tintColor={FlowHubColors.petroleum}
         />
       </View>
       <ThemedText style={styles.title}>Este cliente ainda não tem mesas</ThemedText>
       <ThemedText style={styles.text} themeColor="textSecondary">
-        Cadastre a primeira mesa para registrar leituras e valores.
+        Cadastre a numeração da mesa (ex.: N324) e o valor da ficha para começar a registrar leituras.
       </ThemedText>
       <Pressable style={styles.cta} onPress={onAdd}>
         <ThemedText style={styles.ctaText}>Adicionar primeira mesa</ThemedText>
@@ -37,10 +37,10 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   iconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#E0F9F8',
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: QuickActionColors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

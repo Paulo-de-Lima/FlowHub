@@ -152,15 +152,84 @@ export function formatLeituraMedidor(valor: number): string {
   return String(valor).padStart(5, '0');
 }
 
-export function getLeituraAnterior(registros: { leitura: number; data_leitura: string }[]) {
-  if (registros.length === 0) return null;
+export function getLeituraAnterior(
+  registros: { id: number; leitura: number; data_leitura: string }[],
+  excluirId?: number,
+): number | null {
+  const filtrados = excluirId != null ? registros.filter((r) => r.id !== excluirId) : registros;
+  if (filtrados.length === 0) return null;
 
-  const ordenados = [...registros].sort((a, b) => {
-    const cmp = b.data_leitura.localeCompare(a.data_leitura);
-    return cmp !== 0 ? cmp : 0;
+  const ordenados = [...filtrados].sort(compareRegistrosDesc);
+  return ordenados[0]?.leitura ?? null;
+}
+
+export function getUltimoRegistro<T extends { id: number; data_leitura: string }>(
+  registros: T[],
+): T | null {
+  if (registros.length === 0) return null;
+  return [...registros].sort(compareRegistrosDesc)[0] ?? null;
+}
+
+export function getLeituraAnteriorParaEdicao(
+  registros: { id: number; leitura: number; data_leitura: string }[],
+  registroId: number,
+): number | null {
+  const alvo = registros.find((r) => r.id === registroId);
+  if (!alvo) return getLeituraAnterior(registros, registroId);
+
+  const anteriores = registros.filter((r) => {
+    if (r.id === registroId) return false;
+    const cmp = r.data_leitura.localeCompare(alvo.data_leitura);
+    if (cmp < 0) return true;
+    if (cmp === 0) return r.id < alvo.id;
+    return false;
   });
 
-  return ordenados[0]?.leitura ?? null;
+  if (anteriores.length === 0) return null;
+  return [...anteriores].sort(compareRegistrosDesc)[0]?.leitura ?? null;
+}
+
+export function sortRegistrosCronologico<T extends { id: number; data_leitura: string }>(
+  registros: T[],
+): T[] {
+  return [...registros].sort(compareRegistrosAsc);
+}
+
+export function isRegistroMaisRecente(
+  registro: { id: number; data_leitura: string },
+  registros: { id: number; data_leitura: string }[],
+): boolean {
+  const ultimo = getUltimoRegistro(registros);
+  return ultimo?.id === registro.id;
+}
+
+function compareRegistrosDesc(
+  a: { id: number; data_leitura: string },
+  b: { id: number; data_leitura: string },
+) {
+  const cmp = b.data_leitura.localeCompare(a.data_leitura);
+  return cmp !== 0 ? cmp : b.id - a.id;
+}
+
+function compareRegistrosAsc(
+  a: { id: number; data_leitura: string },
+  b: { id: number; data_leitura: string },
+) {
+  const cmp = a.data_leitura.localeCompare(b.data_leitura);
+  return cmp !== 0 ? cmp : a.id - b.id;
+}
+
+export function isLeituraMedidorValida(leitura: number): boolean {
+  return Number.isInteger(leitura) && leitura >= 0 && leitura <= MAX_LEITURA;
+}
+
+export function isDataAnteriorUltimaLeitura(
+  dataIso: string,
+  ultimoRegistro: { data_leitura: string } | null,
+): boolean {
+  if (!ultimoRegistro) return false;
+  const ultimaIso = ultimoRegistro.data_leitura.match(/^(\d{4}-\d{2}-\d{2})/)?.[1];
+  return ultimaIso != null && dataIso < ultimaIso;
 }
 
 export const VALOR_FICHA_PADRAO = 1.5;

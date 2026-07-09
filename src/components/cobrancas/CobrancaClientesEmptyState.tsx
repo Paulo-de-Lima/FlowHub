@@ -2,7 +2,7 @@ import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { FlowHubColors, Radius, Spacing } from '@/constants/theme';
+import { FlowHubColors, QuickActionColors, Radius, Spacing } from '@/constants/theme';
 
 type CobrancaClientesEmptyStateProps = {
   onAdd: () => void;
@@ -14,13 +14,13 @@ export function CobrancaClientesEmptyState({ onAdd }: CobrancaClientesEmptyState
       <View style={styles.iconWrap}>
         <SymbolView
           name={{ ios: 'person.2.fill', android: 'group', web: 'group' }}
-          size={36}
+          size={44}
           tintColor={FlowHubColors.petroleum}
         />
       </View>
       <ThemedText style={styles.title}>Nenhum cliente vinculado</ThemedText>
       <ThemedText style={styles.text} themeColor="textSecondary">
-        Adicione clientes a esta viagem para registrar cobranças e mesas.
+        Adicione clientes a esta viagem para registrar leituras nas mesas de cada um.
       </ThemedText>
       <Pressable style={styles.cta} onPress={onAdd}>
         <ThemedText style={styles.ctaText}>Adicionar primeiro cliente</ThemedText>
@@ -37,10 +37,10 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   iconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#E0F9F8',
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: QuickActionColors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

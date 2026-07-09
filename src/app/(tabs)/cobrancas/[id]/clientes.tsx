@@ -1,11 +1,19 @@
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useCallback } from 'react';
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useCallback } from 'react';
 
+import { CobrancaAddBar } from '@/components/cobrancas/CobrancaAddBar';
 import { CobrancaAddClienteModal } from '@/components/cobrancas/CobrancaAddClienteModal';
+import { CobrancaBreadcrumb } from '@/components/cobrancas/CobrancaBreadcrumb';
 import { CobrancaClienteCard } from '@/components/cobrancas/CobrancaClienteCard';
+import { CobrancaClienteCardSkeleton } from '@/components/cobrancas/CobrancaClienteCardSkeleton';
 import { CobrancaClientesEmptyState } from '@/components/cobrancas/CobrancaClientesEmptyState';
 import { CobrancaConfirmModal } from '@/components/cobrancas/CobrancaConfirmModal';
 import { ConfirmDeleteModal } from '@/components/cobrancas/ConfirmDeleteModal';
@@ -14,10 +22,17 @@ import { CobrancaViagemFilters } from '@/components/cobrancas/CobrancaViagemFilt
 import { CobrancaViagemHeader } from '@/components/cobrancas/CobrancaViagemHeader';
 import { CobrancaViagemHeroCard } from '@/components/cobrancas/CobrancaViagemHeroCard';
 import { CobrancaViagemKpiStrip } from '@/components/cobrancas/CobrancaViagemKpiStrip';
+import { FlowHubToast } from '@/components/cobrancas/FlowHubToast';
 import { COBRANCAS_LIST_PATH } from '@/components/cobrancas/route-utils';
 import { useCobrancaClientesScreen } from '@/components/cobrancas/use-cobranca-clientes-screen';
 import { ThemedText } from '@/components/themed-text';
-import { cardShadowSoft, FlowHubColors, HomeLayout, Radius, Spacing } from '@/constants/theme';
+import {
+  cardShadowSoft,
+  FlowHubColors,
+  HomeLayout,
+  Radius,
+  Spacing,
+} from '@/constants/theme';
 
 export default function CobrancaClientesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,11 +48,15 @@ export default function CobrancaClientesScreen() {
         dataViagem={s.dataViagem}
         onBack={() => router.navigate(COBRANCAS_LIST_PATH)}
       />
+      <CobrancaBreadcrumb
+        segments={[
+          { label: 'Cobranças', onPress: () => router.navigate(COBRANCAS_LIST_PATH) },
+          { label: s.cobrancaNome || 'Viagem' },
+        ]}
+      />
       <View style={styles.heroWrap}>
         {s.loading && s.clientes.length === 0 ? (
-          <View style={[styles.heroSkeleton, cardShadowSoft]}>
-            <ActivityIndicator size="large" color={FlowHubColors.turquoise} />
-          </View>
+          <View style={[styles.heroSkeleton, cardShadowSoft]} />
         ) : (
           <CobrancaViagemHeroCard
             aReceber={s.stats.totalDeve}
@@ -46,7 +65,7 @@ export default function CobrancaClientesScreen() {
           />
         )}
       </View>
-      <View style={styles.body}>
+      <View style={styles.filtersBlock}>
         <CobrancaViagemKpiStrip
           pendentes={s.stats.pendentesCount}
           cobrados={s.stats.cobradosCount}
@@ -60,51 +79,57 @@ export default function CobrancaClientesScreen() {
           onBuscaChange={s.setBusca}
         />
       </View>
+      <CobrancaAddBar label="Adicionar cliente" onPress={s.openAddModal} />
+      {s.actionError ? (
+        <Pressable style={styles.errorBanner} onPress={s.dismissActionError}>
+          <ThemedText style={styles.errorBannerText}>{s.actionError}</ThemedText>
+          <SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} size={14} tintColor={FlowHubColors.white} />
+        </Pressable>
+      ) : null}
     </>
+  );
+
+  const listEmpty = s.loading && s.clientes.length === 0 ? (
+    <View style={styles.skeletonList}>
+      <CobrancaClienteCardSkeleton />
+      <CobrancaClienteCardSkeleton />
+      <CobrancaClienteCardSkeleton />
+    </View>
+  ) : s.error ? (
+    <View style={styles.centerState}>
+      <ThemedText style={styles.errorText}>{s.error}</ThemedText>
+      <Pressable style={styles.retryBtn} onPress={() => s.loadData()}>
+        <ThemedText style={styles.retryText}>Tentar novamente</ThemedText>
+      </Pressable>
+    </View>
+  ) : s.clientes.length === 0 ? (
+    <CobrancaClientesEmptyState onAdd={s.openAddModal} />
+  ) : (
+    <ThemedText style={styles.filterEmpty} themeColor="textSecondary">
+      Nenhum cliente neste filtro.
+    </ThemedText>
   );
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.screen}>
-        {s.loading && s.clientes.length === 0 ? (
-          <>
-            {listHeader}
-            <View style={styles.centerState}>
-              <ActivityIndicator size="large" color={FlowHubColors.turquoise} />
-            </View>
-          </>
-        ) : s.error ? (
-          <>
-            {listHeader}
-            <View style={styles.centerState}>
-              <ThemedText style={styles.errorText}>{s.error}</ThemedText>
-              <Pressable style={styles.retryBtn} onPress={() => s.loadData()}>
-                <ThemedText style={styles.retryText}>Tentar novamente</ThemedText>
-              </Pressable>
-            </View>
-          </>
-        ) : (
-          <FlatList
-            data={s.filtrados}
-            keyExtractor={(item) => String(item.vinculoId)}
-            contentContainerStyle={styles.listContent}
-            ListHeaderComponent={listHeader}
-            refreshControl={
-              <RefreshControl refreshing={s.refreshing} onRefresh={() => s.loadData(true)} tintColor={FlowHubColors.turquoise} />
-            }
-            ListEmptyComponent={
-              s.clientes.length === 0 ? (
-                <CobrancaClientesEmptyState onAdd={s.openAddModal} />
-              ) : (
-                <ThemedText style={styles.filterEmpty} themeColor="textSecondary">
-                  Nenhum cliente neste filtro.
-                </ThemedText>
-              )
-            }
-            renderItem={({ item }) => (
+        <FlowHubToast message={s.successMessage} onDismiss={s.dismissSuccess} />
+
+        <FlatList
+          data={s.error || (s.loading && s.clientes.length === 0) ? [] : s.filtrados}
+          keyExtractor={(item) => String(item.vinculoId)}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={listEmpty}
+          refreshControl={
+            <RefreshControl refreshing={s.refreshing} onRefresh={() => s.loadData(true)} tintColor={FlowHubColors.turquoise} />
+          }
+          renderItem={({ item }) => (
               <View style={styles.cardWrap}>
                 <CobrancaClienteCard
+                  variant="compact"
                   item={item}
                   onMarcarCobrado={() => s.openConfirm(item)}
                   onDesfazer={() => s.desfazerCobrado(item)}
@@ -113,19 +138,14 @@ export default function CobrancaClientesScreen() {
                 />
               </View>
             )}
-          />
-        )}
+        />
 
-        <Pressable style={[styles.fab, cardShadowSoft]} onPress={s.openAddModal} accessibilityLabel="Adicionar cliente">
-          <LinearGradient colors={[FlowHubColors.turquoise, '#0FB5B1']} style={styles.fabGradient}>
-            <SymbolView name={{ ios: 'plus', android: 'add', web: 'add' }} size={28} tintColor={FlowHubColors.white} />
-          </LinearGradient>
-        </Pressable>
       </View>
 
       <CobrancaConfirmModal
         visible={s.confirmVisible}
         nome={s.confirmItem?.cliente.nome?.trim() || 'Cliente'}
+        totalDeve={s.confirmItem?.totalDeve ?? 0}
         confirming={s.confirming}
         error={s.confirmError}
         onClose={s.closeConfirm}
@@ -178,18 +198,44 @@ export default function CobrancaClientesScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: FlowHubColors.lightGray },
+  list: { flex: 1 },
   heroWrap: { marginTop: HomeLayout.heroOverlap, paddingHorizontal: Spacing.four, zIndex: 3 },
   heroSkeleton: {
     backgroundColor: FlowHubColors.white,
     borderRadius: Radius.xl,
     padding: Spacing.six,
-    alignItems: 'center',
     minHeight: 140,
   },
-  body: { paddingHorizontal: Spacing.four, paddingTop: Spacing.four, gap: Spacing.four },
-  listContent: { paddingBottom: 100, gap: Spacing.two },
+  filtersBlock: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.four,
+    gap: Spacing.four,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+    marginHorizontal: Spacing.four,
+    marginTop: Spacing.two,
+    backgroundColor: FlowHubColors.petroleum,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  errorBannerText: { flex: 1, color: FlowHubColors.white, fontSize: 13, fontWeight: '600' },
+  listContent: {
+    flexGrow: 1,
+    paddingBottom: Spacing.five,
+    gap: Spacing.two,
+  },
+  skeletonList: {
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.two,
+    paddingTop: Spacing.two,
+  },
   cardWrap: { paddingHorizontal: Spacing.four },
-  centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.two },
+  centerState: { alignItems: 'center', justifyContent: 'center', gap: Spacing.two, paddingVertical: Spacing.five },
   errorText: { color: FlowHubColors.petroleum, textAlign: 'center', paddingHorizontal: Spacing.four },
   retryBtn: {
     backgroundColor: FlowHubColors.turquoise,
@@ -199,6 +245,4 @@ const styles = StyleSheet.create({
   },
   retryText: { color: FlowHubColors.navy, fontWeight: '700' },
   filterEmpty: { textAlign: 'center', padding: Spacing.four, paddingHorizontal: Spacing.four },
-  fab: { position: 'absolute', right: Spacing.four, bottom: Spacing.four, borderRadius: 28, overflow: 'hidden' },
-  fabGradient: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
 });

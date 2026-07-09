@@ -20,8 +20,6 @@ type CobrancaBody = {
 
   data_viagem?: string;
 
-  observacoes?: string | null;
-
 };
 
 
@@ -67,8 +65,6 @@ type CobrancaWithStatus = {
   intervalo_dias: number;
 
   data_viagem: Date;
-
-  observacoes: string | null;
 
   cobranca_clientes: { cobrado: boolean | null; data_cobranca: Date | null; cliente_id: number }[];
 
@@ -439,8 +435,6 @@ async function enrichCobranca(cobranca: CobrancaWithStatus) {
 
     data_viagem: serializeDate(dataViagem),
 
-    observacoes: cobranca.observacoes,
-
     referenciaBase: serializeDate(referenciaBase),
 
     proximaViagem: serializeDate(dataViagem),
@@ -810,8 +804,6 @@ router.post('/', async (req: Request, res: Response) => {
 
         data_viagem: dataViagem,
 
-        observacoes: body.observacoes ?? null,
-
       },
 
       include: {
@@ -905,8 +897,6 @@ router.put('/:id', async (req: Request, res: Response) => {
         intervalo_dias: intervalo,
 
         data_viagem: dataViagem,
-
-        observacoes: body.observacoes,
 
       },
 

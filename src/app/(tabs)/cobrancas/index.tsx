@@ -219,11 +219,11 @@ export default function CobrancasScreen() {
                 monthLabel={monthLabel}
               />
 
-              <CobrancaDashboard data={dashboard} loading={loading && !dashboard} />
+              <CobrancaDashboard data={dashboard} loading={loading && !dashboard} defaultExpanded={false} />
 
               {cobrancas.length > 0 ? (
                 <View style={styles.listTitleRow}>
-                  <ThemedText style={styles.listSectionTitle}>Suas viagens</ThemedText>
+                  <ThemedText style={styles.listSectionTitle}>Suas rotas</ThemedText>
                   <ThemedText style={styles.listCount}>{cobrancas.length}</ThemedText>
                 </View>
               ) : null}

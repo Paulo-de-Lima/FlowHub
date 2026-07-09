@@ -4,29 +4,75 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import {
   formatCurrency,
   formatDate,
+  formatLeituraMedidor,
   isRegistroQuitado,
   saldoRegistro,
   temPagamentoParcial,
 } from '@/components/cobrancas/cobrancas-utils';
 import { ThemedText } from '@/components/themed-text';
-import { FeatureColors, FlowHubColors, QuickActionColors, Radius, Spacing } from '@/constants/theme';
+import {
+  CobrancaTypography,
+  FeatureColors,
+  FlowHubColors,
+  QuickActionColors,
+  Radius,
+  SemanticColors,
+  Spacing,
+} from '@/constants/theme';
 import type { RegistroMesa } from '@/services/api';
 
 type RegistroCardProps = {
   registro: RegistroMesa;
+  isAtual?: boolean;
+  compact?: boolean;
+  onEditar: () => void;
   onRegistrarPagamento: () => void;
   onDelete: () => void;
 };
 
-export function RegistroCard({ registro, onRegistrarPagamento, onDelete }: RegistroCardProps) {
+export function RegistroCard({
+  registro,
+  isAtual = false,
+  compact = false,
+  onEditar,
+  onRegistrarPagamento,
+  onDelete,
+}: RegistroCardProps) {
   const quitado = isRegistroQuitado(registro);
   const parcial = temPagamentoParcial(registro);
   const saldo = registro.saldo ?? saldoRegistro(registro);
   const valorPago = registro.valor_pago ?? 0;
 
+  if (compact && !isAtual) {
+    const statusLabel = quitado ? 'Quitado' : parcial ? 'Parcial' : saldo > 0 ? 'Pendente' : 'Em dia';
+    const statusStyle = quitado
+      ? styles.statusQuitado
+      : saldo > 0
+        ? styles.statusPendente
+        : styles.statusOk;
+
+    return (
+      <Pressable
+        style={({ pressed }) => [styles.compactRow, pressed && styles.pressed]}
+        onPress={onEditar}
+        accessibilityLabel={`Leitura de ${formatDate(registro.data_leitura)}, ${statusLabel}`}>
+        <ThemedText style={styles.compactDate}>{formatDate(registro.data_leitura)}</ThemedText>
+        <ThemedText style={styles.compactDot}>·</ThemedText>
+        <ThemedText style={styles.compactLeitura}>{formatLeituraMedidor(registro.leitura)}</ThemedText>
+        <ThemedText style={styles.compactDot}>·</ThemedText>
+        <ThemedText style={styles.compactValor}>{formatCurrency(registro.deve)}</ThemedText>
+        <View style={[styles.statusPill, statusStyle]}>
+          <ThemedText style={styles.statusText}>{statusLabel}</ThemedText>
+        </View>
+      </Pressable>
+    );
+  }
+
   return (
-    <View style={[styles.card, quitado && styles.cardQuitado]}>
-      {quitado ? <View style={styles.accentBar} /> : null}
+    <View style={[styles.card, quitado && styles.cardQuitado, isAtual && styles.cardAtual]}>
+      {quitado || isAtual ? (
+        <View style={[styles.accentBar, isAtual && !quitado && styles.accentBarAtual]} />
+      ) : null}
 
       <View style={styles.content}>
         <View style={styles.topRow}>
@@ -39,39 +85,50 @@ export function RegistroCard({ registro, onRegistrarPagamento, onDelete }: Regis
           </View>
 
           <View style={styles.topInfo}>
-            <ThemedText style={styles.date}>{formatDate(registro.data_leitura)}</ThemedText>
+            <View style={styles.dateRow}>
+              <ThemedText style={styles.date}>{formatDate(registro.data_leitura)}</ThemedText>
+              {isAtual ? (
+                <View style={styles.atualBadge}>
+                  <ThemedText style={styles.atualBadgeText}>Atual</ThemedText>
+                </View>
+              ) : null}
+            </View>
             <View style={[styles.leituraPill, quitado && styles.leituraPillQuitado]}>
               <ThemedText style={[styles.leituraLabel, quitado && styles.leituraLabelQuitado]}>
                 Leitura
               </ThemedText>
-              <ThemedText style={styles.leitura}>{registro.leitura}</ThemedText>
+              <ThemedText style={styles.leitura}>{formatLeituraMedidor(registro.leitura)}</ThemedText>
             </View>
           </View>
 
-          <Pressable
-            style={({ pressed }) => [styles.deleteBtn, pressed && styles.pressed]}
-            onPress={onDelete}
-            accessibilityLabel="Excluir leitura">
-            <SymbolView
-              name={{ ios: 'trash', android: 'delete', web: 'delete' }}
-              size={16}
-              tintColor={FlowHubColors.darkGray}
-            />
-          </Pressable>
+          <View style={styles.actionBtns}>
+            <Pressable
+              style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+              onPress={onEditar}
+              accessibilityLabel="Editar leitura">
+              <SymbolView
+                name={{ ios: 'pencil', android: 'edit', web: 'edit' }}
+                size={16}
+                tintColor={FlowHubColors.petroleum}
+              />
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+              onPress={onDelete}
+              accessibilityLabel="Excluir leitura">
+              <SymbolView
+                name={{ ios: 'trash', android: 'delete', web: 'delete' }}
+                size={16}
+                tintColor={FlowHubColors.darkGray}
+              />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.valoresRow}>
           <ValorCell label="Valor" value={formatCurrency(registro.deve)} />
-          <ValorCell
-            label="Pago"
-            value={formatCurrency(valorPago)}
-            destaque={quitado || parcial}
-          />
-          <ValorCell
-            label="Em aberto"
-            value={formatCurrency(saldo)}
-            destaque={saldo > 0}
-          />
+          <ValorCell label="Pago" value={formatCurrency(valorPago)} destaque={quitado || parcial} />
+          <ValorCell label="Em aberto" value={formatCurrency(saldo)} destaque={saldo > 0} />
         </View>
 
         <Pressable
@@ -115,22 +172,72 @@ function ValorCell({
 }
 
 const styles = StyleSheet.create({
+  compactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: Spacing.two,
+    backgroundColor: FlowHubColors.white,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: SemanticColors.borderSubtle,
+  },
+  compactDate: {
+    ...CobrancaTypography.label,
+    color: FlowHubColors.petroleum,
+  },
+  compactDot: {
+    fontSize: 12,
+    color: FlowHubColors.darkGray,
+    opacity: 0.5,
+  },
+  compactLeitura: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: FlowHubColors.navy,
+  },
+  compactValor: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: FlowHubColors.darkGray,
+  },
+  statusPill: {
+    marginLeft: 'auto',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  statusQuitado: { backgroundColor: FeatureColors.incomeBg },
+  statusPendente: { backgroundColor: SemanticColors.warningBg },
+  statusOk: { backgroundColor: FlowHubColors.lightGray },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: FlowHubColors.petroleum,
+  },
   card: {
     flexDirection: 'row',
     borderRadius: Radius.md,
     overflow: 'hidden',
     borderWidth: 1,
     backgroundColor: FlowHubColors.white,
-    borderColor: '#E2E8EE',
+    borderColor: SemanticColors.borderSubtle,
   },
   cardQuitado: {
     backgroundColor: FeatureColors.incomeBg,
     borderColor: 'rgba(20, 200, 196, 0.28)',
   },
+  cardAtual: {
+    borderColor: FlowHubColors.turquoise,
+    borderWidth: 2,
+  },
   accentBar: {
     width: 4,
     backgroundColor: FlowHubColors.turquoise,
   },
+  accentBarAtual: { backgroundColor: FlowHubColors.petroleum },
   content: {
     flex: 1,
     padding: Spacing.two,
@@ -149,14 +256,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: FlowHubColors.lightGray,
   },
-  leituraIconQuitado: {
-    backgroundColor: QuickActionColors.background,
-  },
+  leituraIconQuitado: { backgroundColor: QuickActionColors.background },
   topInfo: { flex: 1, gap: 4, minWidth: 0 },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, flexWrap: 'wrap' },
   date: {
     fontSize: 13,
     fontWeight: '600',
     color: FlowHubColors.petroleum,
+  },
+  atualBadge: {
+    backgroundColor: QuickActionColors.background,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  atualBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: FlowHubColors.petroleum,
+    textTransform: 'uppercase',
   },
   leituraPill: {
     alignSelf: 'flex-start',
@@ -168,33 +286,24 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     backgroundColor: FlowHubColors.lightGray,
   },
-  leituraPillQuitado: {
-    backgroundColor: QuickActionColors.background,
-  },
+  leituraPillQuitado: { backgroundColor: QuickActionColors.background },
   leituraLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    ...CobrancaTypography.label,
     color: FlowHubColors.darkGray,
   },
-  leituraLabelQuitado: {
-    color: FeatureColors.income,
-  },
+  leituraLabelQuitado: { color: FeatureColors.income },
   leitura: {
     fontSize: 18,
     fontWeight: '800',
     color: FlowHubColors.navy,
   },
-  deleteBtn: {
+  actionBtns: { flexDirection: 'row', gap: 4 },
+  iconBtn: {
     padding: 6,
     borderRadius: Radius.md,
     backgroundColor: FlowHubColors.lightGray,
   },
-  valoresRow: {
-    flexDirection: 'row',
-    gap: Spacing.one,
-  },
+  valoresRow: { flexDirection: 'row', gap: Spacing.one },
   valorCell: {
     flex: 1,
     backgroundColor: FlowHubColors.lightGray,
@@ -205,11 +314,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   valorLabel: {
-    fontSize: 9,
-    fontWeight: '700',
+    ...CobrancaTypography.label,
+    fontSize: 11,
     color: FlowHubColors.darkGray,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
   },
   valorValue: {
     fontSize: 13,
@@ -217,9 +324,7 @@ const styles = StyleSheet.create({
     color: FlowHubColors.navy,
     textAlign: 'center',
   },
-  valorDestaque: {
-    color: FlowHubColors.petroleum,
-  },
+  valorDestaque: { color: FlowHubColors.petroleum },
   pagamentoBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,7 +334,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#E2E8EE',
+    borderColor: SemanticColors.borderSubtle,
   },
   pagamentoText: {
     flex: 1,
@@ -237,8 +342,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: FlowHubColors.petroleum,
   },
-  pagamentoTextQuitado: {
-    color: FeatureColors.income,
-  },
+  pagamentoTextQuitado: { color: FeatureColors.income },
   pressed: { opacity: 0.88 },
 });

@@ -1,3 +1,4 @@
+import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,24 +16,30 @@ import {
   calcularDeveLeitura,
   calcularDiferencaLeitura,
   formatCurrency,
+  formatDate,
   formatLeituraMedidor,
-  getLeituraAnterior,
+  getLeituraAnteriorParaEdicao,
+  getUltimoRegistro,
+  isDataAnteriorUltimaLeitura,
+  isLeituraMedidorValida,
   isRolagemMedidor,
   MAX_LEITURA,
   parseDisplayDateToISO,
   todayDisplay,
 } from '@/components/cobrancas/cobrancas-utils';
 import { ThemedText } from '@/components/themed-text';
-import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
-import type { Mesa } from '@/services/api';
+import { cardShadowSoft, FlowHubColors, modalWebCard, QuickActionColors, Radius, SemanticColors, Spacing } from '@/constants/theme';
+import type { Mesa, RegistroMesa } from '@/services/api';
 
 type NovaLeituraModalProps = {
   visible: boolean;
   saving: boolean;
   error: string | null;
   mesa: Mesa | null;
+  mode?: 'create' | 'edit';
+  registroEdit?: RegistroMesa | null;
   onClose: () => void;
-  onSave: (data: { data_leitura: string; leitura: number; deve: number; valor_pago: number }) => void;
+  onSave: (data: { data_leitura: string; leitura: number; deve: number; valor_pago?: number }) => void;
 };
 
 export function NovaLeituraModal({
@@ -40,39 +47,49 @@ export function NovaLeituraModal({
   saving,
   error,
   mesa,
+  mode = 'create',
+  registroEdit = null,
   onClose,
   onSave,
 }: NovaLeituraModalProps) {
+  const isEdit = mode === 'edit' && registroEdit != null;
   const [dataLeitura, setDataLeitura] = useState('');
   const [leitura, setLeitura] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (visible) {
-      setDataLeitura(todayDisplay());
-      setLeitura('');
-      setLocalError(null);
-    }
-  }, [visible]);
-
-  const leituraAnterior = useMemo(
-    () => (mesa ? getLeituraAnterior(mesa.registros) : null),
-    [mesa],
+  const ultimoRegistro = useMemo(
+    () => (mesa && !isEdit ? getUltimoRegistro(mesa.registros) : null),
+    [mesa, isEdit],
   );
+
+  const leituraAnterior = useMemo(() => {
+    if (!mesa) return null;
+    if (isEdit && registroEdit) {
+      return getLeituraAnteriorParaEdicao(mesa.registros, registroEdit.id);
+    }
+    return ultimoRegistro?.leitura ?? null;
+  }, [mesa, isEdit, registroEdit, ultimoRegistro]);
 
   const valorFicha = mesa?.valor_ficha ?? 1.5;
 
+  useEffect(() => {
+    if (!visible) return;
+    if (isEdit && registroEdit) {
+      setDataLeitura(formatDate(registroEdit.data_leitura));
+      setLeitura(String(registroEdit.leitura));
+    } else {
+      setDataLeitura(todayDisplay());
+      setLeitura('');
+    }
+    setLocalError(null);
+  }, [visible, isEdit, registroEdit]);
+
   const breakdown = useMemo(() => {
     const leituraNum = Number.parseInt(leitura.trim(), 10);
-    if (!mesa || Number.isNaN(leituraNum) || leituraNum < 0) {
-      return null;
-    }
+    if (!mesa || Number.isNaN(leituraNum)) return null;
 
     if (leituraAnterior === null) {
-      return {
-        primeiraLeitura: true as const,
-        deve: 0,
-      };
+      return { primeiraLeitura: true as const, deve: 0 };
     }
 
     const diferenca = calcularDiferencaLeitura(leituraAnterior, leituraNum);
@@ -93,6 +110,18 @@ export function NovaLeituraModal({
     };
   }, [leitura, leituraAnterior, mesa, valorFicha]);
 
+  const dataIncoerente = useMemo(() => {
+    const iso = parseDisplayDateToISO(dataLeitura);
+    if (!iso || isEdit) return false;
+    return isDataAnteriorUltimaLeitura(iso, ultimoRegistro);
+  }, [dataLeitura, isEdit, ultimoRegistro]);
+
+  const leituraForaRange = useMemo(() => {
+    if (!leitura.trim()) return false;
+    const n = Number.parseInt(leitura.trim(), 10);
+    return Number.isNaN(n) || !isLeituraMedidorValida(n);
+  }, [leitura]);
+
   const displayError = localError ?? error;
 
   function handleSave() {
@@ -103,8 +132,8 @@ export function NovaLeituraModal({
     }
 
     const leituraNum = Number.parseInt(leitura.trim(), 10);
-    if (Number.isNaN(leituraNum) || leituraNum < 0) {
-      setLocalError('Leitura inválida.');
+    if (!isLeituraMedidorValida(leituraNum)) {
+      setLocalError(`Leitura inválida. Use 0 a ${MAX_LEITURA} (5 dígitos).`);
       return;
     }
 
@@ -118,7 +147,7 @@ export function NovaLeituraModal({
       data_leitura: iso,
       leitura: leituraNum,
       deve: breakdown.deve,
-      valor_pago: 0,
+      ...(isEdit && registroEdit ? { valor_pago: registroEdit.valor_pago } : {}),
     });
   }
 
@@ -129,7 +158,7 @@ export function NovaLeituraModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.overlayPress} onPress={onClose}>
           <Pressable style={[styles.card, cardShadowSoft]} onPress={(e) => e.stopPropagation()}>
-            <ThemedText style={styles.title}>Nova leitura</ThemedText>
+            <ThemedText style={styles.title}>{isEdit ? 'Editar leitura' : 'Nova leitura'}</ThemedText>
             <ThemedText style={styles.context} themeColor="textSecondary">
               Mesa {mesa?.numeracao ?? '—'} · Ficha {formatCurrency(valorFicha)}
             </ThemedText>
@@ -138,26 +167,65 @@ export function NovaLeituraModal({
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.form}
               showsVerticalScrollIndicator={false}>
-              <Field
-                label="Data"
-                value={dataLeitura}
-                onChange={setDataLeitura}
-                placeholder="DD/MM/AAAA"
-              />
+              {!isEdit ? (
+                <View style={styles.infoBoxHighlight}>
+                  <SymbolView
+                    name={{ ios: 'gauge.with.dots.needle.67percent', android: 'speed', web: 'speed' }}
+                    size={20}
+                    tintColor={FlowHubColors.petroleum}
+                  />
+                  {ultimoRegistro ? (
+                    <ThemedText style={styles.infoText} themeColor="textSecondary">
+                      Última leitura:{' '}
+                      <ThemedText style={styles.infoHighlight}>
+                        {formatLeituraMedidor(ultimoRegistro.leitura)}
+                      </ThemedText>{' '}
+                      em {formatDate(ultimoRegistro.data_leitura)}
+                    </ThemedText>
+                  ) : (
+                    <ThemedText style={styles.infoText} themeColor="textSecondary">
+                      Primeira leitura desta mesa
+                    </ThemedText>
+                  )}
+                </View>
+              ) : leituraAnterior != null ? (
+                <View style={styles.infoBoxHighlight}>
+                  <ThemedText style={styles.infoText} themeColor="textSecondary">
+                    Leitura anterior:{' '}
+                    <ThemedText style={styles.infoHighlight}>
+                      {formatLeituraMedidor(leituraAnterior)}
+                    </ThemedText>
+                  </ThemedText>
+                </View>
+              ) : null}
+
+              <Field label="Data" value={dataLeitura} onChange={setDataLeitura} placeholder="DD/MM/AAAA" />
               <Field
                 label="Leitura"
                 value={leitura}
                 onChange={setLeitura}
                 keyboardType="number-pad"
-                placeholder="Número do medidor"
+                placeholder="00000"
+                hint="5 dígitos (0 a 99999)"
               />
+
+              {dataIncoerente ? (
+                <ThemedText style={styles.avisoLeitura}>
+                  Data anterior à última leitura — confira se está correto.
+                </ThemedText>
+              ) : null}
+
+              {leituraForaRange ? (
+                <ThemedText style={styles.avisoLeitura}>
+                  Leitura fora do intervalo 0–99999 — confira o medidor.
+                </ThemedText>
+              ) : null}
 
               {breakdown ? (
                 <View style={styles.breakdown}>
                   {breakdown.primeiraLeitura ? (
                     <ThemedText style={styles.breakdownHint} themeColor="textSecondary">
-                      Primeira leitura desta mesa: valor a cobrar será R$ 0,00. A partir da
-                      próxima leitura o valor será calculado automaticamente.
+                      Primeira leitura: valor a cobrar será R$ 0,00.
                     </ThemedText>
                   ) : (
                     <>
@@ -171,10 +239,6 @@ export function NovaLeituraModal({
                             ({formatLeituraMedidor(breakdown.leituraAnterior)} →{' '}
                             {formatLeituraMedidor(breakdown.leituraAtual)}, rolagem) ={' '}
                             {breakdown.diferenca} fichas
-                          </ThemedText>
-                          <ThemedText style={styles.breakdownLine} themeColor="textSecondary">
-                            ({MAX_LEITURA} − {breakdown.leituraAnterior} + 1) +{' '}
-                            {breakdown.leituraAtual} = {breakdown.diferenca}
                           </ThemedText>
                         </>
                       ) : (
@@ -232,12 +296,14 @@ function Field({
   value,
   onChange,
   placeholder,
+  hint,
   keyboardType,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  hint?: string;
   keyboardType?: 'default' | 'number-pad' | 'decimal-pad';
 }) {
   return (
@@ -250,7 +316,13 @@ function Field({
         placeholder={placeholder}
         placeholderTextColor={FlowHubColors.darkGray}
         style={styles.input}
+        maxLength={keyboardType === 'number-pad' ? 5 : undefined}
       />
+      {hint ? (
+        <ThemedText style={styles.fieldHint} themeColor="textSecondary">
+          {hint}
+        </ThemedText>
+      ) : null}
     </View>
   );
 }
@@ -260,7 +332,8 @@ const styles = StyleSheet.create({
   overlayPress: {
     flex: 1,
     backgroundColor: 'rgba(11, 31, 58, 0.45)',
-    justifyContent: 'flex-end',
+    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
+    padding: Platform.OS === 'web' ? Spacing.four : 0,
   },
   card: {
     backgroundColor: FlowHubColors.white,
@@ -268,20 +341,32 @@ const styles = StyleSheet.create({
     borderTopRightRadius: Radius.xl,
     padding: Spacing.four,
     maxHeight: '85%',
+    ...modalWebCard,
+    ...(Platform.OS === 'web' ? { borderRadius: Radius.xl } : {}),
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: FlowHubColors.navy,
-  },
-  context: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: Spacing.two,
-  },
+  title: { fontSize: 20, fontWeight: '700', color: FlowHubColors.navy },
+  context: { fontSize: 14, fontWeight: '500', marginBottom: Spacing.two },
   form: { gap: Spacing.two, paddingBottom: Spacing.two },
+  infoBoxHighlight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    backgroundColor: QuickActionColors.background,
+    borderRadius: Radius.md,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: 'rgba(20, 200, 196, 0.35)',
+  },
+  infoBox: {
+    backgroundColor: QuickActionColors.background,
+    borderRadius: Radius.md,
+    padding: Spacing.two,
+  },
+  infoText: { fontSize: 13, lineHeight: 19 },
+  infoHighlight: { fontWeight: '700', color: FlowHubColors.navy },
   field: { gap: Spacing.one },
   fieldLabel: { fontSize: 14, fontWeight: '600', color: FlowHubColors.navy },
+  fieldHint: { fontSize: 12, lineHeight: 17 },
   input: {
     backgroundColor: FlowHubColors.lightGray,
     borderRadius: Radius.md,
@@ -290,7 +375,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: FlowHubColors.navy,
     borderWidth: 1,
-    borderColor: '#E2E8EE',
+    borderColor: SemanticColors.borderSubtle,
   },
   breakdown: {
     backgroundColor: FlowHubColors.lightGray,
@@ -324,7 +409,6 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontWeight: '600',
     color: '#B45309',
-    marginTop: Spacing.one,
   },
   formError: { color: FlowHubColors.petroleum, fontSize: 14 },
   saveBtn: {

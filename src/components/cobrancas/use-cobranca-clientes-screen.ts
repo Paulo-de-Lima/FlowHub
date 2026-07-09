@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { router } from 'expo-router';
 
 import type { CobrancaViagemFiltro } from '@/components/cobrancas/CobrancaViagemFilters';
@@ -41,6 +41,9 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
   const [confirming, setConfirming] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [clienteAction, setClienteAction] = useState<ClienteEditAction>(null);
   const [clienteActionError, setClienteActionError] = useState<string | null>(null);
@@ -106,13 +109,24 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
     [clientes.length, stats.pendentesCount, stats.cobradosCount],
   );
 
+  function showSuccess(msg: string) {
+    setSuccessMessage(msg);
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    successTimerRef.current = setTimeout(() => setSuccessMessage(null), 2500);
+  }
+
+  function dismissActionError() {
+    setActionError(null);
+  }
+
   async function openAddModal() {
     setFormError(null);
     setAddVisible(true);
     try {
       setAllClientes(await getClientes());
-    } catch {
+    } catch (err) {
       setAllClientes([]);
+      setFormError(err instanceof Error ? err.message : 'Erro ao carregar clientes.');
     }
   }
 
@@ -130,6 +144,7 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
       await toggleClienteCobrado(cobrancaId, confirmItem.cliente.id, true);
       setConfirmVisible(false);
       setConfirmItem(null);
+      showSuccess('Cliente marcado como recebido na viagem.');
       await loadData(true);
     } catch (err) {
       setConfirmError(err instanceof Error ? err.message : 'Erro ao marcar cobrado.');
@@ -139,11 +154,13 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
   }
 
   async function desfazerCobrado(item: CobrancaClienteItem) {
+    setActionError(null);
     try {
       await toggleClienteCobrado(cobrancaId, item.cliente.id, false);
+      showSuccess('Marcação de recebido desfeita.');
       await loadData(true);
-    } catch {
-      /* noop */
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Erro ao desfazer cobrança.');
     }
   }
 
@@ -187,6 +204,7 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
         await deleteCliente(editItem.cliente.id);
       }
       closeClienteAction();
+      showSuccess(clienteAction === 'desvincular' ? 'Cliente desvinculado.' : 'Cliente excluído.');
       await loadData(true);
     } catch (err) {
       setClienteActionError(err instanceof Error ? err.message : 'Erro ao processar ação.');
@@ -339,6 +357,10 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
     confirming,
     formError,
     confirmError,
+    actionError,
+    successMessage,
+    dismissActionError,
+    dismissSuccess: () => setSuccessMessage(null),
     loadData,
     openAddModal,
     openConfirm,

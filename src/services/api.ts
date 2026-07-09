@@ -102,7 +102,6 @@ export type Cobranca = {
   nome: string;
   intervalo_dias: number;
   data_viagem: string;
-  observacoes: string | null;
   referenciaBase: string | null;
   proximaViagem: string | null;
   repeticaoPrevista: string | null;
@@ -117,7 +116,6 @@ export type CobrancaInput = {
   nome: string;
   intervalo_dias: number;
   data_viagem: string;
-  observacoes?: string | null;
 };
 
 export type CobrancasListResponse = {

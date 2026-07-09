@@ -155,5 +155,36 @@ export const Typography = {
   },
 } as const;
 
+export const SemanticColors = {
+  success: '#16A34A',
+  successBg: '#F0FDF4',
+  successBorder: '#86EFAC',
+  danger: '#DC2626',
+  dangerBg: FeatureColors.expenseBg,
+  borderSubtle: '#E8EDF2',
+  surfaceCobrado: '#F0FDF4',
+  warning: '#F59E0B',
+  warningBg: '#FFFBEB',
+} as const;
+
+export const CobrancaTypography = {
+  screenTitle: { fontSize: 22, fontWeight: '700' as const, lineHeight: 28 },
+  subtitle: { fontSize: 14, fontWeight: '500' as const, lineHeight: 20 },
+  body: { fontSize: 15, fontWeight: '400' as const, lineHeight: 22 },
+  label: { fontSize: 12, fontWeight: '600' as const, lineHeight: 16 },
+  kpi: { fontSize: 22, fontWeight: '800' as const, lineHeight: 28 },
+  eyebrow: { fontSize: 11, fontWeight: '700' as const, letterSpacing: 0.5 },
+} as const;
+
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+export const TabBarHeight = 49;
 export const MaxContentWidth = 800;
+
+export const modalWebCard = Platform.select({
+  web: {
+    maxWidth: 480,
+    width: '100%' as const,
+    alignSelf: 'center' as const,
+  },
+  default: {},
+});

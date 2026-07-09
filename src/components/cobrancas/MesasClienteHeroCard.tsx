@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
 import { ThemedText } from '@/components/themed-text';
@@ -9,6 +9,9 @@ type MesasClienteHeroCardProps = {
   totalPago: number;
   mesasCount: number;
   registrosPendentes: number;
+  cobrado?: boolean;
+  marcandoCobrado?: boolean;
+  onMarcarCobrado?: () => void;
 };
 
 export function MesasClienteHeroCard({
@@ -16,6 +19,9 @@ export function MesasClienteHeroCard({
   totalPago,
   mesasCount,
   registrosPendentes,
+  cobrado = false,
+  marcandoCobrado = false,
+  onMarcarCobrado,
 }: MesasClienteHeroCardProps) {
   const totalValor = totalPago + totalDeve;
   const progressPct = totalValor > 0 ? totalPago / totalValor : 0;
@@ -46,6 +52,18 @@ export function MesasClienteHeroCard({
       </View>
 
       <ThemedText style={styles.hint}>{pendentesLabel}</ThemedText>
+
+      {onMarcarCobrado && !cobrado ? (
+        <Pressable
+          style={[styles.marcarBtn, marcandoCobrado && styles.marcarBtnDisabled]}
+          onPress={onMarcarCobrado}
+          disabled={marcandoCobrado}
+          accessibilityLabel="Marcar recebido na viagem">
+          <ThemedText style={styles.marcarBtnText}>Marcar recebido na viagem</ThemedText>
+        </Pressable>
+      ) : cobrado ? (
+        <ThemedText style={styles.cobradoHint}>Recebido na viagem</ThemedText>
+      ) : null}
     </View>
   );
 }
@@ -105,5 +123,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: FlowHubColors.petroleum,
     lineHeight: 17,
+  },
+  marcarBtn: {
+    marginTop: Spacing.one,
+    backgroundColor: FlowHubColors.navy,
+    borderRadius: Radius.md,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  marcarBtnDisabled: { opacity: 0.7 },
+  marcarBtnText: {
+    color: FlowHubColors.white,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  cobradoHint: {
+    marginTop: Spacing.one,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#16A34A',
   },
 });

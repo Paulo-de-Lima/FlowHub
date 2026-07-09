@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { parseRouteId } from '@/components/cobrancas/route-utils';
 import { formatDate, saldoRegistro } from '@/components/cobrancas/cobrancas-utils';
@@ -8,6 +8,8 @@ import {
   deleteMesa,
   deleteRegistro,
   getClienteMesas,
+  getCobrancaClientes,
+  toggleClienteCobrado,
   updateMesa,
   updateRegistro,
   type Mesa,
@@ -18,16 +20,24 @@ export type DeleteTarget =
   | { kind: 'registro'; registro: RegistroMesa }
   | { kind: 'mesa'; mesa: Mesa };
 
-export function useClienteMesasScreen(clienteIdParam: string | undefined) {
+export function useClienteMesasScreen(
+  clienteIdParam: string | undefined,
+  cobrancaIdParam?: string | undefined,
+) {
   const clienteIdNum = parseRouteId(clienteIdParam);
+  const cobrancaId = parseRouteId(cobrancaIdParam);
 
   const [clienteNome, setClienteNome] = useState('');
+  const [cobrancaNome, setCobrancaNome] = useState('');
+  const [clienteCobrado, setClienteCobrado] = useState(false);
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [mesaModalVisible, setMesaModalVisible] = useState(false);
   const [mesaEditMode, setMesaEditMode] = useState(false);
@@ -36,10 +46,16 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
   const [mesaEditValorFicha, setMesaEditValorFicha] = useState(1.5);
 
   const [leituraModalVisible, setLeituraModalVisible] = useState(false);
+  const [leituraMode, setLeituraMode] = useState<'create' | 'edit'>('create');
+  const [registroEdit, setRegistroEdit] = useState<RegistroMesa | null>(null);
   const [mesaAtiva, setMesaAtiva] = useState<Mesa | null>(null);
 
   const [pagamentoModalVisible, setPagamentoModalVisible] = useState(false);
   const [pagamentoRegistro, setPagamentoRegistro] = useState<RegistroMesa | null>(null);
+
+  const [confirmCobradoVisible, setConfirmCobradoVisible] = useState(false);
+  const [confirmCobradoError, setConfirmCobradoError] = useState<string | null>(null);
+  const [marcandoCobrado, setMarcandoCobrado] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -69,6 +85,12 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     };
   }, [mesas]);
 
+  function showSuccess(msg: string) {
+    setSuccessMessage(msg);
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    successTimerRef.current = setTimeout(() => setSuccessMessage(null), 2500);
+  }
+
   const loadData = useCallback(
     async (isRefresh = false) => {
       if (clienteIdNum === null) {
@@ -87,6 +109,13 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
         setClienteNome(data.cliente.nome?.trim() || 'Cliente');
         setMesas(data.mesas);
 
+        if (cobrancaId != null) {
+          const cobData = await getCobrancaClientes(cobrancaId);
+          setCobrancaNome(cobData.cobranca.nome?.trim() || '');
+          const item = cobData.clientes.find((c) => c.cliente.id === clienteIdNum);
+          setClienteCobrado(item?.cobrado ?? false);
+        }
+
         setExpandedId((prev) => {
           if (!isRefresh && data.mesas.length === 1) return data.mesas[0].id;
           if (prev !== null && data.mesas.some((m) => m.id === prev)) return prev;
@@ -99,7 +128,7 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
         setRefreshing(false);
       }
     },
-    [clienteIdNum],
+    [clienteIdNum, cobrancaId],
   );
 
   function openNovaMesa() {
@@ -127,12 +156,24 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
 
   function openNovaLeitura(mesa: Mesa) {
     setMesaAtiva(mesa);
+    setLeituraMode('create');
+    setRegistroEdit(null);
+    setFormError(null);
+    setLeituraModalVisible(true);
+  }
+
+  function openEditLeitura(mesa: Mesa, registro: RegistroMesa) {
+    setMesaAtiva(mesa);
+    setLeituraMode('edit');
+    setRegistroEdit(registro);
     setFormError(null);
     setLeituraModalVisible(true);
   }
 
   function closeLeituraModal() {
     setLeituraModalVisible(false);
+    setRegistroEdit(null);
+    setLeituraMode('create');
     setFormError(null);
   }
 
@@ -149,8 +190,10 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     try {
       if (mesaEditMode && mesaEditId !== null) {
         await updateMesa(mesaEditId, data);
+        showSuccess('Mesa atualizada.');
       } else {
         await createMesa(clienteIdNum, data);
+        showSuccess('Mesa criada.');
       }
       setMesaModalVisible(false);
       await loadData(true);
@@ -165,7 +208,7 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     data_leitura: string;
     leitura: number;
     deve: number;
-    valor_pago: number;
+    valor_pago?: number;
   }) {
     if (!mesaAtiva) return;
 
@@ -173,12 +216,35 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     setFormError(null);
 
     try {
-      await createRegistro(mesaAtiva.id, data);
+      if (leituraMode === 'edit' && registroEdit) {
+        await updateRegistro(registroEdit.id, {
+          data_leitura: data.data_leitura,
+          leitura: data.leitura,
+          deve: data.deve,
+        });
+        showSuccess('Leitura atualizada.');
+      } else {
+        await createRegistro(mesaAtiva.id, {
+          data_leitura: data.data_leitura,
+          leitura: data.leitura,
+          deve: data.deve,
+          valor_pago: data.valor_pago ?? 0,
+        });
+        showSuccess('Leitura salva.');
+      }
       setLeituraModalVisible(false);
+      setRegistroEdit(null);
+      setLeituraMode('create');
       setExpandedId(mesaAtiva.id);
       await loadData(true);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Erro ao criar leitura.');
+      setFormError(
+        err instanceof Error
+          ? err.message
+          : leituraMode === 'edit'
+            ? 'Erro ao editar leitura.'
+            : 'Erro ao criar leitura.',
+      );
     } finally {
       setSaving(false);
     }
@@ -206,11 +272,43 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     try {
       await updateRegistro(pagamentoRegistro.id, { valor_pago: valorPago });
       closePagamentoModal();
+      showSuccess('Pagamento registrado.');
       await loadData(true);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Erro ao registrar pagamento.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  function openMarcarCobrado() {
+    if (cobrancaId == null) return;
+    setConfirmCobradoError(null);
+    setConfirmCobradoVisible(true);
+  }
+
+  function closeMarcarCobrado() {
+    setConfirmCobradoVisible(false);
+    setConfirmCobradoError(null);
+  }
+
+  async function handleMarcarCobrado() {
+    if (cobrancaId == null || clienteIdNum == null) return;
+
+    setMarcandoCobrado(true);
+    setConfirmCobradoError(null);
+
+    try {
+      await toggleClienteCobrado(cobrancaId, clienteIdNum, true);
+      setConfirmCobradoVisible(false);
+      setClienteCobrado(true);
+      showSuccess('Cliente marcado como recebido na viagem.');
+    } catch (err) {
+      setConfirmCobradoError(
+        err instanceof Error ? err.message : 'Erro ao marcar recebido na viagem.',
+      );
+    } finally {
+      setMarcandoCobrado(false);
     }
   }
 
@@ -232,19 +330,17 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
   async function handleConfirmDelete() {
     if (!deleteTarget) return;
 
-    if (deleteTarget.kind === 'mesa' && deleteTarget.mesa.registros.length > 0) {
-      return;
-    }
-
     setDeleting(true);
     setDeleteError(null);
 
     try {
       if (deleteTarget.kind === 'registro') {
         await deleteRegistro(deleteTarget.registro.id);
+        showSuccess('Leitura excluída.');
       } else {
         await deleteMesa(deleteTarget.mesa.id);
         setExpandedId((prev) => (prev === deleteTarget.mesa.id ? null : prev));
+        showSuccess('Mesa excluída.');
       }
       closeDeleteConfirm();
       await loadData(true);
@@ -281,29 +377,37 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
       highlight: mesa.numeracao,
       hint:
         leiturasCount > 0
-          ? `Esta mesa possui ${leiturasCount} leitura${leiturasCount !== 1 ? 's' : ''}. Exclua todas as leituras antes de remover a mesa.`
+          ? `Esta mesa tem ${leiturasCount} leitura${leiturasCount !== 1 ? 's' : ''} que serão apagadas permanentemente.`
           : 'Esta ação não pode ser desfeita.',
-      confirmDisabled: leiturasCount > 0,
+      confirmDisabled: false,
     };
   }, [deleteTarget]);
 
   return {
     clienteNome,
+    cobrancaNome,
+    clienteCobrado,
     mesas,
     expandedId,
     loading,
     refreshing,
     error,
     actionError,
+    successMessage,
     stats,
     mesaModalVisible,
     mesaEditMode,
     mesaEditNumeracao,
     mesaEditValorFicha,
     leituraModalVisible,
+    leituraMode,
+    registroEdit,
     mesaAtiva,
     pagamentoModalVisible,
     pagamentoRegistro,
+    confirmCobradoVisible,
+    confirmCobradoError,
+    marcandoCobrado,
     deleteVisible: deleteTarget !== null,
     deleteModalMeta,
     deleting,
@@ -315,6 +419,7 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     openEditMesa,
     closeMesaModal,
     openNovaLeitura,
+    openEditLeitura,
     closeLeituraModal,
     openPagamentoModal,
     closePagamentoModal,
@@ -322,10 +427,14 @@ export function useClienteMesasScreen(clienteIdParam: string | undefined) {
     toggleExpanded,
     handleSaveMesa,
     handleSaveLeitura,
+    openMarcarCobrado,
+    closeMarcarCobrado,
+    handleMarcarCobrado,
     openDeleteRegistroConfirm,
     openDeleteMesaConfirm,
     closeDeleteConfirm,
     handleConfirmDelete,
     dismissActionError,
+    dismissSuccess: () => setSuccessMessage(null),
   };
 }

@@ -14,7 +14,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SymbolView } from 'expo-symbols';
 
 import { ThemedText } from '@/components/themed-text';
-import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
+import { cardShadowSoft, FlowHubColors, modalWebCard, QuickActionColors, Radius, Spacing } from '@/constants/theme';
 import type { Cliente } from '@/services/api';
 
 type CobrancaAddClienteModalProps = {
@@ -304,7 +304,8 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(11, 31, 58, 0.45)',
-    justifyContent: 'flex-end',
+    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
+    padding: Platform.OS === 'web' ? Spacing.four : 0,
   },
   card: {
     backgroundColor: FlowHubColors.white,
@@ -314,6 +315,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.four,
     paddingBottom: Spacing.five,
     maxHeight: '90%',
+    ...modalWebCard,
+    ...(Platform.OS === 'web' ? { borderRadius: Radius.xl } : {}),
   },
   title: {
     fontSize: 20,

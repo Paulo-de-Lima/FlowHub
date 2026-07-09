@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,16 +8,25 @@ import { ThemedText } from '@/components/themed-text';
 import { FlowHubColors, HomeLayout, Spacing, Typography } from '@/constants/theme';
 
 type MesasClienteHeaderProps = {
+  cobrancaNome?: string;
   nome: string;
   mesasCount: number;
   onBack: () => void;
+  headerAction?: React.ReactNode;
 };
 
-export function MesasClienteHeader({ nome, mesasCount, onBack }: MesasClienteHeaderProps) {
+export function MesasClienteHeader({
+  cobrancaNome,
+  nome,
+  mesasCount,
+  onBack,
+  headerAction,
+}: MesasClienteHeaderProps) {
   const insets = useSafeAreaInsets();
 
-  const subtitle =
-    mesasCount === 0
+  const subtitle = cobrancaNome
+    ? `${cobrancaNome} · ${nome}`
+    : mesasCount === 0
       ? 'Mesas e leituras'
       : mesasCount === 1
         ? '1 mesa'
@@ -45,6 +55,7 @@ export function MesasClienteHeader({ nome, mesasCount, onBack }: MesasClienteHea
             tintColor={FlowHubColors.white}
           />
         </Pressable>
+        {headerAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
       </View>
 
       <View style={styles.textBlock}>
@@ -69,8 +80,10 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     minHeight: 40,
   },
+  headerAction: { flex: 1, alignItems: 'flex-end' },
   backBtn: {
     width: 40,
     height: 40,
@@ -88,7 +101,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.65)',
+    color: 'rgba(255, 255, 255, 0.75)',
   },
   pressed: { opacity: 0.88 },
 });

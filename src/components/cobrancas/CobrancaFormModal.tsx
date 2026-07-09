@@ -26,7 +26,7 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 
-import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
+import { cardShadowSoft, CobrancaTypography, FlowHubColors, modalWebCard, Radius, Spacing } from '@/constants/theme';
 
 import {
   formatDate,
@@ -82,8 +82,6 @@ export function CobrancaFormModal({
 
   const [intervaloDias, setIntervaloDias] = React.useState('30');
 
-  const [observacoes, setObservacoes] = React.useState('');
-
 
 
   React.useEffect(() => {
@@ -103,8 +101,6 @@ export function CobrancaFormModal({
       );
 
       setIntervaloDias(String(cobranca?.intervalo_dias ?? 30));
-
-      setObservacoes(cobranca?.observacoes ?? '');
 
     }
 
@@ -135,8 +131,6 @@ export function CobrancaFormModal({
       data_viagem: iso ?? '',
 
       intervalo_dias: Number(intervaloDias),
-
-      observacoes: observacoes.trim() || null,
 
     });
 
@@ -171,6 +165,8 @@ export function CobrancaFormModal({
             showsVerticalScrollIndicator={false}
 
             contentContainerStyle={styles.form}>
+
+            <ThemedText style={styles.sectionHeading}>Dados da viagem</ThemedText>
 
             <Field label="Nome da cobrança *">
 
@@ -260,28 +256,6 @@ export function CobrancaFormModal({
 
 
 
-            <Field label="Observações">
-
-              <TextInput
-
-                value={observacoes}
-
-                onChangeText={setObservacoes}
-
-                placeholder="Opcional"
-
-                placeholderTextColor={FlowHubColors.darkGray}
-
-                multiline
-
-                style={[styles.input, styles.textArea]}
-
-              />
-
-            </Field>
-
-
-
             {error ? <ThemedText style={styles.error}>{error}</ThemedText> : null}
 
             <View style={styles.actions}>
@@ -358,7 +332,9 @@ const styles = StyleSheet.create({
 
     backgroundColor: 'rgba(11, 31, 58, 0.45)',
 
-    justifyContent: 'flex-end',
+    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
+
+    padding: Platform.OS === 'web' ? Spacing.four : 0,
 
   },
 
@@ -378,6 +354,10 @@ const styles = StyleSheet.create({
 
     maxHeight: '90%',
 
+    ...modalWebCard,
+
+    ...(Platform.OS === 'web' ? { borderRadius: Radius.xl } : {}),
+
   },
 
   title: {
@@ -393,6 +373,13 @@ const styles = StyleSheet.create({
   },
 
   form: { gap: Spacing.three },
+
+  sectionHeading: {
+    ...CobrancaTypography.eyebrow,
+    color: FlowHubColors.petroleum,
+    textTransform: 'uppercase',
+    marginTop: Spacing.one,
+  },
 
   field: { gap: Spacing.one },
 
@@ -427,8 +414,6 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8EE',
 
   },
-
-  textArea: { minHeight: 80, textAlignVertical: 'top' },
 
   error: { color: FlowHubColors.petroleum, fontSize: 14 },
 

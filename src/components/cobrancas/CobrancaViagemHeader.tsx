@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,9 +13,16 @@ type CobrancaViagemHeaderProps = {
   intervaloDias: number;
   dataViagem?: string | null;
   onBack: () => void;
+  headerAction?: React.ReactNode;
 };
 
-export function CobrancaViagemHeader({ nome, intervaloDias, dataViagem, onBack }: CobrancaViagemHeaderProps) {
+export function CobrancaViagemHeader({
+  nome,
+  intervaloDias,
+  dataViagem,
+  onBack,
+  headerAction,
+}: CobrancaViagemHeaderProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -40,6 +48,7 @@ export function CobrancaViagemHeader({ nome, intervaloDias, dataViagem, onBack }
             tintColor={FlowHubColors.white}
           />
         </Pressable>
+        {headerAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
       </View>
 
       <View style={styles.textBlock}>
@@ -67,8 +76,10 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     minHeight: 40,
   },
+  headerAction: { flex: 1, alignItems: 'flex-end' },
   backBtn: {
     width: 40,
     height: 40,
@@ -86,7 +97,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.65)',
+    color: 'rgba(255, 255, 255, 0.75)',
   },
   pressed: { opacity: 0.88 },
 });
