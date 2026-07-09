@@ -1,5 +1,6 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { HomeHeader } from '@/components/home/home-header';
 import { HomeHeroCard } from '@/components/home/home-hero-card';
@@ -7,15 +8,46 @@ import { HomeKpiStrip } from '@/components/home/home-kpi-strip';
 import { HOME_MOCK } from '@/components/home/home-mock';
 import { HomePendenciasSection } from '@/components/home/home-pendencias-section';
 import { HomeQuickActions } from '@/components/home/home-quick-actions';
+import { formatCobrancaTitulo, formatIntervaloDias, formatProximaViagem, formatRepeticaoPrevista } from '@/components/cobrancas/cobrancas-utils';
 import { getCurrentMonthLabel } from '@/components/home/home-utils';
 import { FlowHubColors, HomeLayout, Spacing } from '@/constants/theme';
+import { getCobrancas, type Cobranca } from '@/services/api';
 
 export default function HomeScreen() {
   const { nome } = useLocalSearchParams<{ nome?: string }>();
   const userName = nome?.trim() || 'Usuário';
   const firstName = userName.split(' ')[0];
   const monthLabel = getCurrentMonthLabel();
-  const { finance, kpis, nextBilling, pendingMaintenanceCount } = HOME_MOCK;
+  const { finance, kpis, pendingMaintenanceCount } = HOME_MOCK;
+
+  const [nextBilling, setNextBilling] = useState<{
+    id: number;
+    region: string;
+    subtitle: string;
+  } | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      getCobrancas()
+        .then((data) => {
+          const proxima: Cobranca | undefined =
+            data.proximaId != null
+              ? data.cobrancas.find((c) => c.id === data.proximaId)
+              : data.cobrancas[0];
+
+          if (proxima) {
+            setNextBilling({
+              id: proxima.id,
+              region: formatCobrancaTitulo(proxima.nome),
+              subtitle: `${formatProximaViagem(proxima.proximaViagem, proxima.data_viagem)} · ${formatIntervaloDias(proxima.intervalo_dias)} · retorno ${formatRepeticaoPrevista(proxima.data_viagem, proxima.intervalo_dias)} · ${proxima.totalClientes} clientes`,
+            });
+          } else {
+            setNextBilling(null);
+          }
+        })
+        .catch(() => setNextBilling(null));
+    }, []),
+  );
 
   return (
     <View style={styles.screen}>
@@ -26,9 +58,19 @@ export default function HomeScreen() {
         <HomeHeader
           firstName={firstName}
           monthLabel={monthLabel}
-          nextBilling={nextBilling}
+          nextBilling={
+            nextBilling
+              ? { region: nextBilling.region, subtitle: nextBilling.subtitle }
+              : null
+          }
           onNotificationPress={() => {}}
-          onCobrancaPress={() => router.push('/cobrancas')}
+          onCobrancaPress={() => {
+            if (nextBilling) {
+              router.push(`/cobrancas/${nextBilling.id}/clientes`);
+            } else {
+              router.push('/cobrancas');
+            }
+          }}
         />
 
         <View style={styles.heroWrap}>

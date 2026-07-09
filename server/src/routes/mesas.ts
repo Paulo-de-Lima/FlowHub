@@ -1,0 +1,321 @@
+import { Router, type Request, type Response } from 'express';
+
+import { isForeignKeyError, isNotFoundError, parseDateInput, parseId, serializeDecimal } from '../lib/http';
+import { normalizarPagamento } from '../lib/registro-pagamento';
+import { prisma } from '../lib/prisma';
+
+const router = Router();
+
+type MesaBody = {
+  numeracao?: string;
+};
+
+type RegistroBody = {
+  data_leitura?: string;
+  leitura?: number;
+  deve?: number;
+  valor_pago?: number;
+  pago?: boolean;
+};
+
+function mapRegistro(reg: {
+  id: number;
+  mesa_id: number;
+  data_leitura: Date;
+  leitura: number;
+  deve: unknown;
+  valor_pago: unknown;
+  pago: boolean;
+}) {
+  const pagamento = normalizarPagamento(reg.deve, reg.valor_pago);
+  return {
+    id: reg.id,
+    mesa_id: reg.mesa_id,
+    data_leitura: reg.data_leitura,
+    leitura: reg.leitura,
+    deve: pagamento.deve,
+    valor_pago: pagamento.valor_pago,
+    saldo: pagamento.saldo,
+    pago: pagamento.pago,
+  };
+}
+
+function mapMesa(mesa: {
+  id: number;
+  cliente_id: number;
+  numeracao: string;
+  registros_mesa: {
+    id: number;
+    mesa_id: number;
+    data_leitura: Date;
+    leitura: number;
+    deve: unknown;
+    valor_pago: unknown;
+    pago: boolean;
+  }[];
+}) {
+  const registros = mesa.registros_mesa.map(mapRegistro);
+  const totalDeve = registros.reduce((s, r) => s + r.saldo, 0);
+  const totalPago = registros.reduce((s, r) => s + r.valor_pago, 0);
+
+  return {
+    id: mesa.id,
+    cliente_id: mesa.cliente_id,
+    numeracao: mesa.numeracao,
+    registros,
+    totalDeve,
+    totalPago,
+  };
+}
+
+function resolveValorPagoInput(body: RegistroBody, deve: number): number {
+  if (body.valor_pago !== undefined) {
+    return body.valor_pago;
+  }
+  if (body.pago === true) {
+    return deve;
+  }
+  if (body.pago === false) {
+    return 0;
+  }
+  return 0;
+}
+
+router.get('/clientes/:clienteId/mesas', async (req: Request, res: Response) => {
+  const clienteId = parseId(req.params.clienteId);
+  if (clienteId === null) {
+    res.status(400).json({ error: 'ID inválido.' });
+    return;
+  }
+
+  try {
+    const cliente = await prisma.clientes.findUnique({ where: { id: clienteId } });
+    if (!cliente) {
+      res.status(404).json({ error: 'Cliente não encontrado.' });
+      return;
+    }
+
+    const mesas = await prisma.mesas.findMany({
+      where: { cliente_id: clienteId },
+      include: { registros_mesa: { orderBy: { data_leitura: 'desc' } } },
+      orderBy: { id: 'asc' },
+    });
+
+    res.json({
+      cliente,
+      mesas: mesas.map(mapMesa),
+    });
+  } catch (error) {
+    console.error('[GET /clientes/:clienteId/mesas]', error);
+    res.status(500).json({ error: 'Erro ao listar mesas.' });
+  }
+});
+
+router.post('/clientes/:clienteId/mesas', async (req: Request, res: Response) => {
+  const clienteId = parseId(req.params.clienteId);
+  if (clienteId === null) {
+    res.status(400).json({ error: 'ID inválido.' });
+    return;
+  }
+
+  const body = req.body as MesaBody;
+
+  if (!body.numeracao?.trim()) {
+    res.status(400).json({ error: 'Numeração da mesa é obrigatória.' });
+    return;
+  }
+
+  try {
+    const mesa = await prisma.mesas.create({
+      data: { cliente_id: clienteId, numeracao: body.numeracao.trim() },
+      include: { registros_mesa: true },
+    });
+
+    res.status(201).json(mapMesa(mesa));
+  } catch (error) {
+    if (isForeignKeyError(error)) {
+      res.status(404).json({ error: 'Cliente não encontrado.' });
+      return;
+    }
+    console.error('[POST /clientes/:clienteId/mesas]', error);
+    res.status(500).json({ error: 'Erro ao criar mesa.' });
+  }
+});
+
+router.put('/mesas/:id', async (req: Request, res: Response) => {
+  const id = parseId(req.params.id);
+  if (id === null) {
+    res.status(400).json({ error: 'ID inválido.' });
+    return;
+  }
+
+  const body = req.body as MesaBody;
+
+  try {
+    const mesa = await prisma.mesas.update({
+      where: { id },
+      data: { numeracao: body.numeracao?.trim() },
+      include: { registros_mesa: { orderBy: { data_leitura: 'desc' } } },
+    });
+
+    res.json(mapMesa(mesa));
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      res.status(404).json({ error: 'Mesa não encontrada.' });
+      return;
+    }
+    console.error('[PUT /mesas/:id]', error);
+    res.status(500).json({ error: 'Erro ao atualizar mesa.' });
+  }
+});
+
+router.delete('/mesas/:id', async (req: Request, res: Response) => {
+  const id = parseId(req.params.id);
+  if (id === null) {
+    res.status(400).json({ error: 'ID inválido.' });
+    return;
+  }
+
+  try {
+    const count = await prisma.registros_mesa.count({ where: { mesa_id: id } });
+    if (count > 0) {
+      res.status(409).json({ error: 'Mesa possui registros e não pode ser excluída.' });
+      return;
+    }
+
+    await prisma.mesas.delete({ where: { id } });
+    res.status(204).send();
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      res.status(404).json({ error: 'Mesa não encontrada.' });
+      return;
+    }
+    console.error('[DELETE /mesas/:id]', error);
+    res.status(500).json({ error: 'Erro ao excluir mesa.' });
+  }
+});
+
+router.post('/mesas/:mesaId/registros', async (req: Request, res: Response) => {
+  const mesaId = parseId(req.params.mesaId);
+  if (mesaId === null) {
+    res.status(400).json({ error: 'ID inválido.' });
+    return;
+  }
+
+  const body = req.body as RegistroBody;
+  const dataLeitura = parseDateInput(body.data_leitura);
+
+  if (!dataLeitura || body.leitura === undefined || body.deve === undefined) {
+    res.status(400).json({ error: 'Data, leitura e valor deve são obrigatórios.' });
+    return;
+  }
+
+  if (body.leitura < 0 || body.deve < 0) {
+    res.status(400).json({ error: 'Leitura e valor devem ser ≥ 0.' });
+    return;
+  }
+
+  const pagamento = normalizarPagamento(body.deve, resolveValorPagoInput(body, body.deve));
+
+  try {
+    const registro = await prisma.registros_mesa.create({
+      data: {
+        mesa_id: mesaId,
+        data_leitura: dataLeitura,
+        leitura: body.leitura,
+        deve: pagamento.deve,
+        valor_pago: pagamento.valor_pago,
+        pago: pagamento.pago,
+      },
+    });
+
+    res.status(201).json(mapRegistro(registro));
+  } catch (error) {
+    if (isForeignKeyError(error)) {
+      res.status(404).json({ error: 'Mesa não encontrada.' });
+      return;
+    }
+    console.error('[POST /mesas/:mesaId/registros]', error);
+    res.status(500).json({ error: 'Erro ao criar registro.' });
+  }
+});
+
+router.put('/registros/:id', async (req: Request, res: Response) => {
+  const id = parseId(req.params.id);
+  if (id === null) {
+    res.status(400).json({ error: 'ID inválido.' });
+    return;
+  }
+
+  const body = req.body as RegistroBody;
+
+  if (body.leitura !== undefined && body.leitura < 0) {
+    res.status(400).json({ error: 'Leitura deve ser ≥ 0.' });
+    return;
+  }
+
+  if (body.deve !== undefined && body.deve < 0) {
+    res.status(400).json({ error: 'Valor deve ser ≥ 0.' });
+    return;
+  }
+
+  try {
+    const atual = await prisma.registros_mesa.findUnique({ where: { id } });
+    if (!atual) {
+      res.status(404).json({ error: 'Registro não encontrado.' });
+      return;
+    }
+
+    const deve = body.deve !== undefined ? body.deve : serializeDecimal(atual.deve);
+    const valorPagoInput =
+      body.valor_pago !== undefined
+        ? body.valor_pago
+        : body.pago !== undefined
+          ? resolveValorPagoInput(body, deve)
+          : serializeDecimal(atual.valor_pago);
+
+    const pagamento = normalizarPagamento(deve, valorPagoInput);
+
+    const registro = await prisma.registros_mesa.update({
+      where: { id },
+      data: {
+        data_leitura: body.data_leitura ? (parseDateInput(body.data_leitura) ?? undefined) : undefined,
+        leitura: body.leitura,
+        deve: pagamento.deve,
+        valor_pago: pagamento.valor_pago,
+        pago: pagamento.pago,
+      },
+    });
+
+    res.json(mapRegistro(registro));
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      res.status(404).json({ error: 'Registro não encontrado.' });
+      return;
+    }
+    console.error('[PUT /registros/:id]', error);
+    res.status(500).json({ error: 'Erro ao atualizar registro.' });
+  }
+});
+
+router.delete('/registros/:id', async (req: Request, res: Response) => {
+  const id = parseId(req.params.id);
+  if (id === null) {
+    res.status(400).json({ error: 'ID inválido.' });
+    return;
+  }
+
+  try {
+    await prisma.registros_mesa.delete({ where: { id } });
+    res.status(204).send();
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      res.status(404).json({ error: 'Registro não encontrado.' });
+      return;
+    }
+    console.error('[DELETE /registros/:id]', error);
+    res.status(500).json({ error: 'Erro ao excluir registro.' });
+  }
+});
+
+export default router;
