@@ -69,6 +69,20 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+export type ClienteSummary = Cliente & {
+  qtdMesas: number;
+  totalDeve: number;
+  registrosPendentes: number;
+};
+
+export async function getClientesSummary(): Promise<ClienteSummary[]> {
+  return request<ClienteSummary[]>('/clientes?summary=1');
+}
+
+export async function getClienteSummary(id: number): Promise<ClienteSummary> {
+  return request<ClienteSummary>(`/clientes/${id}?summary=1`);
+}
+
 export async function getClientes(): Promise<Cliente[]> {
   return request<Cliente[]>('/clientes');
 }

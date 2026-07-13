@@ -176,8 +176,46 @@ export const CobrancaTypography = {
   eyebrow: { fontSize: 11, fontWeight: '700' as const, letterSpacing: 0.5 },
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const TabBarHeight = 49;
+/** Tab bar flutuante (pill glass) — tokens visuais e dimensões. */
+export const TabBarTokens = {
+  pillHeight: 60,
+  floatingMargin: 12,
+  maxWidth: 360,
+  widthRatio: 0.82,
+  activeCircleSize: 44,
+  iconSize: 22,
+  pillBg: 'rgba(11, 31, 58, 0.75)',
+  pillBorder: 'rgba(255,255,255,0.1)',
+  iconInactive: 'rgba(255,255,255,0.55)',
+  iconActive: FlowHubColors.turquoise,
+  activeCircle: FlowHubColors.petroleum,
+} as const;
+
+export const TAB_BAR_PILL_HEIGHT = TabBarTokens.pillHeight;
+export const TAB_BAR_FLOATING_MARGIN = TabBarTokens.floatingMargin;
+export const TabBarHeight = TAB_BAR_PILL_HEIGHT + TAB_BAR_FLOATING_MARGIN;
+
+/** Margem inferior extra (legado). Prefira `getTabBarBottomOffset`. */
+export const BottomTabInset = TAB_BAR_FLOATING_MARGIN;
+
+/** Pill + margem flutuante + safe area — base para paddingBottom de listas e FABs. */
+export function getTabBarBottomOffset(insetsBottom = 0): number {
+  return TabBarHeight + Math.max(insetsBottom, 8);
+}
+
+export const tabBarFloatingShadow = Platform.select({
+  web: {
+    boxShadow: '0 8px 32px rgba(11, 31, 58, 0.35)',
+  },
+  default: {
+    shadowColor: FlowHubColors.navy,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 16,
+  },
+});
+
 export const MaxContentWidth = 800;
 
 export const modalWebCard = Platform.select({

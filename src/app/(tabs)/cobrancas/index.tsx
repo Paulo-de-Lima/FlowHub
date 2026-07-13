@@ -19,6 +19,7 @@ import { CobrancasHeader } from '@/components/cobrancas/CobrancasHeader';
 import { CobrancasHeroCard } from '@/components/cobrancas/CobrancasHeroCard';
 import { CobrancasKpiStrip } from '@/components/cobrancas/CobrancasKpiStrip';
 import { getCurrentMonthLabel } from '@/components/home/home-utils';
+import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
 import { ThemedText } from '@/components/themed-text';
 import {
   cardShadowSoft,
@@ -56,6 +57,7 @@ export default function CobrancasScreen() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [arrecadadoMes, setArrecadadoMes] = useState(0);
   const monthLabel = getCurrentMonthLabel();
+  const scrollPad = useTabBarScrollPadding();
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
@@ -239,7 +241,7 @@ export default function CobrancasScreen() {
       <FlatList
         data={loading || error ? [] : cobrancas}
         keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: scrollPad }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -284,7 +286,7 @@ export default function CobrancasScreen() {
       />
 
       <Pressable
-        style={[styles.fab, cardShadowSoft]}
+        style={[styles.fab, cardShadowSoft, { bottom: scrollPad }]}
         onPress={openCreateModal}
         accessibilityLabel="Nova cobrança">
         <LinearGradient
@@ -364,7 +366,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   listContent: {
-    paddingBottom: 100,
     flexGrow: 1,
   },
   cardWrap: {
@@ -434,7 +435,6 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: Spacing.four,
-    bottom: Spacing.four,
     borderRadius: 28,
     overflow: 'hidden',
   },

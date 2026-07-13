@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getLogoDimensions, LOGO_SOURCE } from '@/components/home/home-utils';
@@ -43,7 +44,7 @@ export function CobrancasHeader({ totalViagens = 0, onNotificationPress }: Cobra
           <Image
             source={LOGO_SOURCE}
             style={logoSize}
-            resizeMode="contain"
+            contentFit="contain"
             accessibilityLabel="FlowHub"
           />
         </View>

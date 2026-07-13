@@ -25,6 +25,7 @@ import { CobrancaViagemKpiStrip } from '@/components/cobrancas/CobrancaViagemKpi
 import { FlowHubToast } from '@/components/cobrancas/FlowHubToast';
 import { COBRANCAS_LIST_PATH } from '@/components/cobrancas/route-utils';
 import { useCobrancaClientesScreen } from '@/components/cobrancas/use-cobranca-clientes-screen';
+import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
 import { ThemedText } from '@/components/themed-text';
 import {
   cardShadowSoft,
@@ -37,6 +38,7 @@ import {
 export default function CobrancaClientesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const s = useCobrancaClientesScreen(id);
+  const scrollPad = useTabBarScrollPadding();
 
   useFocusEffect(useCallback(() => { s.loadData(); }, [s.loadData]));
 
@@ -120,7 +122,7 @@ export default function CobrancaClientesScreen() {
           data={s.error || (s.loading && s.clientes.length === 0) ? [] : s.filtrados}
           keyExtractor={(item) => String(item.vinculoId)}
           style={styles.list}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: scrollPad }]}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
           refreshControl={
@@ -226,7 +228,6 @@ const styles = StyleSheet.create({
   errorBannerText: { flex: 1, color: FlowHubColors.white, fontSize: 13, fontWeight: '600' },
   listContent: {
     flexGrow: 1,
-    paddingBottom: Spacing.five,
     gap: Spacing.two,
   },
   skeletonList: {

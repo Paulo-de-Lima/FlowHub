@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { HomeBillingPreview } from '@/components/home/home-mock';
@@ -46,7 +47,7 @@ export function HomeHeader({
           <Image
             source={LOGO_SOURCE}
             style={logoSize}
-            resizeMode="contain"
+            contentFit="contain"
             accessibilityLabel="FlowHub"
           />
         </View>

@@ -2,8 +2,15 @@ import { Router, type Request, type Response } from 'express';
 
 
 
-import { isForeignKeyError, isNotFoundError, parseId, parseISODateInput, serializeDate, serializeDecimal } from '../lib/http';
-
+import {
+  isForeignKeyError,
+  isNotFoundError,
+  parseId,
+  parseISODateInput,
+  serializeDate,
+  serializeDecimal,
+} from '../lib/http';
+import { calcClienteTotais } from '../lib/cliente-totais';
 import { prisma } from '../lib/prisma';
 
 
@@ -460,42 +467,6 @@ async function enrichCobranca(cobranca: CobrancaWithStatus) {
     despesasPeriodo: await calcDespesasPeriodo(cobranca.intervalo_dias, referenciaBase),
 
   };
-
-}
-
-
-
-async function calcClienteTotais(clienteId: number) {
-
-  const mesas = await prisma.mesas.findMany({
-
-    where: { cliente_id: clienteId },
-
-    include: { registros_mesa: true },
-
-  });
-
-
-
-  let totalDeve = 0;
-
-  for (const mesa of mesas) {
-
-    for (const reg of mesa.registros_mesa) {
-
-      const deve = serializeDecimal(reg.deve);
-
-      const valorPago = serializeDecimal(reg.valor_pago);
-
-      totalDeve += Math.max(0, deve - valorPago);
-
-    }
-
-  }
-
-
-
-  return { qtdMesas: mesas.length, totalDeve };
 
 }
 

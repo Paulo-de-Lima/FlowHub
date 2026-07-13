@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { BottomNavBar, type BottomNavBarProps } from '@/components/bottom-nav-bar';
 import { FlowHubColors } from '@/constants/theme';
 
+/** Telas com scroll dentro das tabs: use `useTabBarScrollPadding()` no paddingBottom. */
 export default function TabsLayout() {
   return (
     <Tabs

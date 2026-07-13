@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 
+import { calcClienteTotais, calcClientesTotaisBatch } from '../lib/cliente-totais';
 import { excluirClienteComDependencias } from '../lib/excluir-cliente';
 import { prisma } from '../lib/prisma';
 
@@ -24,12 +25,36 @@ function parseId(value: string | string[]): number | null {
   return Number.isNaN(id) ? null : id;
 }
 
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
+  const withSummary = req.query.summary === '1';
+
   try {
     const clientes = await prisma.clientes.findMany({
-      orderBy: { id: 'asc' },
+      orderBy: { nome: 'asc' },
     });
-    res.json(clientes);
+
+    if (!withSummary) {
+      res.json(clientes);
+      return;
+    }
+
+    const totaisMap = await calcClientesTotaisBatch(clientes.map((c: { id: number }) => c.id));
+
+    res.json(
+      clientes.map((c: (typeof clientes)[number]) => {
+        const totais = totaisMap.get(c.id) ?? { qtdMesas: 0, totalDeve: 0, registrosPendentes: 0 };
+        return {
+          id: c.id,
+          nome: c.nome,
+          cpf: c.cpf,
+          numero: c.numero,
+          endereco: c.endereco,
+          qtdMesas: totais.qtdMesas,
+          totalDeve: totais.totalDeve,
+          registrosPendentes: totais.registrosPendentes,
+        };
+      }),
+    );
   } catch (error) {
     console.error('[GET /clientes]', error);
     res.status(500).json({ error: 'Erro ao listar clientes.' });
@@ -38,6 +63,7 @@ router.get('/', async (_req: Request, res: Response) => {
 
 router.get('/:id', async (req: Request, res: Response) => {
   const id = parseId(req.params.id);
+  const withSummary = req.query.summary === '1';
 
   if (id === null) {
     res.status(400).json({ error: 'ID inválido.' });
@@ -52,7 +78,20 @@ router.get('/:id', async (req: Request, res: Response) => {
       return;
     }
 
-    res.json(cliente);
+    if (!withSummary) {
+      res.json(cliente);
+      return;
+    }
+
+    const totais = await calcClienteTotais(id);
+    res.json({
+      id: cliente.id,
+      nome: cliente.nome,
+      cpf: cliente.cpf,
+      numero: cliente.numero,
+      endereco: cliente.endereco,
+      ...totais,
+    });
   } catch (error) {
     console.error('[GET /clientes/:id]', error);
     res.status(500).json({ error: 'Erro ao buscar cliente.' });

@@ -11,6 +11,7 @@ import { HomeQuickActions } from '@/components/home/home-quick-actions';
 import { formatCobrancaTitulo, formatIntervaloDias, formatProximaViagem, formatRepeticaoPrevista } from '@/components/cobrancas/cobrancas-utils';
 import { getCurrentMonthLabel } from '@/components/home/home-utils';
 import { FlowHubColors, HomeLayout, Spacing } from '@/constants/theme';
+import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
 import { getCobrancas, type Cobranca } from '@/services/api';
 
 export default function HomeScreen() {
@@ -18,6 +19,7 @@ export default function HomeScreen() {
   const userName = nome?.trim() || 'Usuário';
   const firstName = userName.split(' ')[0];
   const monthLabel = getCurrentMonthLabel();
+  const scrollPad = useTabBarScrollPadding();
   const { finance, kpis, pendingMaintenanceCount } = HOME_MOCK;
 
   const [nextBilling, setNextBilling] = useState<{
@@ -53,7 +55,7 @@ export default function HomeScreen() {
     <View style={styles.screen}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollPad }]}
         showsVerticalScrollIndicator={false}>
         <HomeHeader
           firstName={firstName}
@@ -113,9 +115,7 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: Spacing.five,
-  },
+  scrollContent: {},
   heroWrap: {
     marginTop: HomeLayout.heroOverlap,
     paddingHorizontal: Spacing.four,

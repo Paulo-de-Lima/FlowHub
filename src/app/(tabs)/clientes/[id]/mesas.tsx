@@ -11,7 +11,6 @@ import { SymbolView } from 'expo-symbols';
 
 import { CobrancaAddBar } from '@/components/cobrancas/CobrancaAddBar';
 import { CobrancaBreadcrumb } from '@/components/cobrancas/CobrancaBreadcrumb';
-import { CobrancaConfirmModal } from '@/components/cobrancas/CobrancaConfirmModal';
 import { ConfirmDeleteModal } from '@/components/cobrancas/ConfirmDeleteModal';
 import { FlowHubToast } from '@/components/cobrancas/FlowHubToast';
 import { MesaAccordion } from '@/components/cobrancas/MesaAccordion';
@@ -22,42 +21,46 @@ import { MesasEmptyState } from '@/components/cobrancas/MesasEmptyState';
 import { NovaLeituraModal } from '@/components/cobrancas/NovaLeituraModal';
 import { NovaMesaModal } from '@/components/cobrancas/NovaMesaModal';
 import { RegistroPagamentoModal } from '@/components/cobrancas/RegistroPagamentoModal';
-import { COBRANCAS_LIST_PATH, parseRouteId } from '@/components/cobrancas/route-utils';
 import { useClienteMesasScreen } from '@/components/cobrancas/use-cliente-mesas-screen';
+import {
+  CLIENTES_LIST_PATH,
+  clienteDetailPath,
+  parseRouteId,
+} from '@/components/clientes/route-utils';
 import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, HomeLayout, Radius, Spacing } from '@/constants/theme';
 
-export default function ClienteMesasScreen() {
-  const { id, clienteId } = useLocalSearchParams<{ id: string; clienteId: string }>();
-  const cobrancaId = parseRouteId(id);
-  const s = useClienteMesasScreen(clienteId, id);
+export default function ClienteMesasStandaloneScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const clienteId = parseRouteId(id);
+  const s = useClienteMesasScreen(id);
   const scrollPad = useTabBarScrollPadding();
 
-  useFocusEffect(useCallback(() => { s.loadData(); }, [s.loadData]));
+  useFocusEffect(
+    useCallback(() => {
+      s.loadData();
+    }, [s.loadData]),
+  );
 
   const listHeader = (
     <>
       <MesasClienteHeader
-        cobrancaNome={s.cobrancaNome}
         nome={s.clienteNome}
         mesasCount={s.stats.mesasCount}
         onBack={() => {
-          if (cobrancaId != null) {
-            router.navigate(`/cobrancas/${cobrancaId}/clientes`);
-          } else {
-            router.navigate('/cobrancas');
-          }
+          if (clienteId != null) router.navigate(clienteDetailPath(clienteId));
+          else router.back();
         }}
       />
       <CobrancaBreadcrumb
         segments={[
-          { label: 'Cobranças', onPress: () => router.navigate(COBRANCAS_LIST_PATH) },
+          { label: 'Clientes', onPress: () => router.navigate(CLIENTES_LIST_PATH) },
           {
-            label: s.cobrancaNome || 'Viagem',
-            onPress: cobrancaId != null ? () => router.navigate(`/cobrancas/${cobrancaId}/clientes`) : undefined,
+            label: s.clienteNome || 'Cliente',
+            onPress: clienteId != null ? () => router.navigate(clienteDetailPath(clienteId)) : undefined,
           },
-          { label: s.clienteNome || 'Cliente' },
+          { label: 'Mesas' },
         ]}
       />
       <View style={styles.heroWrap}>
@@ -69,9 +72,6 @@ export default function ClienteMesasScreen() {
             totalPago={s.stats.totalPago}
             mesasCount={s.stats.mesasCount}
             registrosPendentes={s.stats.registrosPendentes}
-            cobrado={s.clienteCobrado}
-            marcandoCobrado={s.marcandoCobrado}
-            onMarcarCobrado={cobrancaId != null && !s.clienteCobrado ? s.openMarcarCobrado : undefined}
           />
         )}
       </View>
@@ -79,7 +79,11 @@ export default function ClienteMesasScreen() {
       {s.actionError ? (
         <Pressable style={styles.errorBanner} onPress={s.dismissActionError}>
           <ThemedText style={styles.errorBannerText}>{s.actionError}</ThemedText>
-          <SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} size={14} tintColor={FlowHubColors.white} />
+          <SymbolView
+            name={{ ios: 'xmark', android: 'close', web: 'close' }}
+            size={14}
+            tintColor={FlowHubColors.white}
+          />
         </Pressable>
       ) : null}
       {s.mesas.length > 0 ? (
@@ -90,21 +94,22 @@ export default function ClienteMesasScreen() {
     </>
   );
 
-  const listEmpty = s.loading && s.mesas.length === 0 ? (
-    <View style={styles.skeletonList}>
-      <MesaAccordionSkeleton />
-      <MesaAccordionSkeleton />
-    </View>
-  ) : s.error ? (
-    <View style={styles.centerState}>
-      <ThemedText style={styles.errorText}>{s.error}</ThemedText>
-      <Pressable style={styles.retryBtn} onPress={() => s.loadData()}>
-        <ThemedText style={styles.retryText}>Tentar novamente</ThemedText>
-      </Pressable>
-    </View>
-  ) : (
-    <MesasEmptyState onAdd={s.openNovaMesa} />
-  );
+  const listEmpty =
+    s.loading && s.mesas.length === 0 ? (
+      <View style={styles.skeletonList}>
+        <MesaAccordionSkeleton />
+        <MesaAccordionSkeleton />
+      </View>
+    ) : s.error ? (
+      <View style={styles.centerState}>
+        <ThemedText style={styles.errorText}>{s.error}</ThemedText>
+        <Pressable style={styles.retryBtn} onPress={() => s.loadData()}>
+          <ThemedText style={styles.retryText}>Tentar novamente</ThemedText>
+        </Pressable>
+      </View>
+    ) : (
+      <MesasEmptyState onAdd={s.openNovaMesa} />
+    );
 
   return (
     <>
@@ -143,7 +148,6 @@ export default function ClienteMesasScreen() {
             </View>
           )}
         />
-
       </View>
 
       <NovaMesaModal
@@ -175,16 +179,6 @@ export default function ClienteMesasScreen() {
         registro={s.pagamentoRegistro}
         onClose={s.closePagamentoModal}
         onSave={s.handleSavePagamento}
-      />
-
-      <CobrancaConfirmModal
-        visible={s.confirmCobradoVisible}
-        nome={s.clienteNome}
-        totalDeve={s.stats.totalDeve}
-        confirming={s.marcandoCobrado}
-        error={s.confirmCobradoError}
-        onClose={s.closeMarcarCobrado}
-        onConfirm={s.handleMarcarCobrado}
       />
 
       <ConfirmDeleteModal
@@ -226,15 +220,29 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
   },
   errorBannerText: { flex: 1, color: FlowHubColors.white, fontSize: 13, fontWeight: '600' },
-  sectionHeader: { paddingHorizontal: Spacing.four, paddingTop: Spacing.four, paddingBottom: Spacing.two },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: FlowHubColors.darkGray, letterSpacing: 0.3 },
+  sectionHeader: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.two,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: FlowHubColors.darkGray,
+    letterSpacing: 0.3,
+  },
   listContent: {
     flexGrow: 1,
     gap: Spacing.two,
   },
   skeletonList: { paddingHorizontal: Spacing.four, gap: Spacing.two, paddingTop: Spacing.two },
   cardWrap: { paddingHorizontal: Spacing.four },
-  centerState: { alignItems: 'center', justifyContent: 'center', gap: Spacing.two, paddingVertical: Spacing.five },
+  centerState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.five,
+  },
   errorText: { color: FlowHubColors.petroleum, textAlign: 'center', paddingHorizontal: Spacing.four },
   retryBtn: {
     backgroundColor: FlowHubColors.turquoise,

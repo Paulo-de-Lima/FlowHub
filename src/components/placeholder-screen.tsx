@@ -1,8 +1,9 @@
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { FlowHubColors, Spacing } from '@/constants/theme';
+import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
 
 type PlaceholderScreenProps = {
   title: string;
@@ -10,14 +11,16 @@ type PlaceholderScreenProps = {
 };
 
 export function PlaceholderScreen({ title, description }: PlaceholderScreenProps) {
+  const scrollPad = useTabBarScrollPadding();
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: scrollPad }]}>
         <ThemedText style={styles.title}>{title}</ThemedText>
         <ThemedText style={styles.description} themeColor="textSecondary">
           {description}
         </ThemedText>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -28,7 +31,7 @@ const styles = StyleSheet.create({
     backgroundColor: FlowHubColors.lightGray,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.four,
