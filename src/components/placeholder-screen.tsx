@@ -25,7 +25,12 @@ export function PlaceholderScreen({
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: scrollPad }]}
         showsVerticalScrollIndicator={false}>
-        <FlowHubScreenHeader title={title} subtitle="Em breve" />
+        <FlowHubScreenHeader
+          layout="root-tab"
+          title={title}
+          subtitle="Em breve"
+          heroOverlap
+        />
 
         <View style={styles.heroWrap}>
           <FlowHubEmptyState

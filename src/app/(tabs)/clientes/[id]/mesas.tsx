@@ -9,14 +9,13 @@ import {
 import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 
-import { CobrancaAddBar } from '@/components/cobrancas/CobrancaAddBar';
-import { CobrancaBreadcrumb } from '@/components/cobrancas/CobrancaBreadcrumb';
 import { ConfirmDeleteModal } from '@/components/cobrancas/ConfirmDeleteModal';
 import { FlowHubToast } from '@/components/cobrancas/FlowHubToast';
 import { MesaAccordion } from '@/components/cobrancas/MesaAccordion';
 import { MesaAccordionSkeleton } from '@/components/cobrancas/MesaAccordionSkeleton';
 import { MesasClienteHeader } from '@/components/cobrancas/MesasClienteHeader';
 import { MesasClienteHeroCard } from '@/components/cobrancas/MesasClienteHeroCard';
+import { MesasClienteToolbar } from '@/components/cobrancas/MesasClienteToolbar';
 import { MesasEmptyState } from '@/components/cobrancas/MesasEmptyState';
 import { NovaLeituraModal } from '@/components/cobrancas/NovaLeituraModal';
 import { NovaMesaModal } from '@/components/cobrancas/NovaMesaModal';
@@ -53,13 +52,12 @@ export default function ClienteMesasStandaloneScreen() {
           if (clienteId != null) router.navigate(clienteDetailPath(clienteId));
           else router.back();
         }}
-      />
-      <CobrancaBreadcrumb
-        segments={[
+        breadcrumb={[
           { label: 'Clientes', onPress: () => router.navigate(CLIENTES_LIST_PATH) },
           {
             label: s.clienteNome || 'Cliente',
-            onPress: clienteId != null ? () => router.navigate(clienteDetailPath(clienteId)) : undefined,
+            onPress:
+              clienteId != null ? () => router.navigate(clienteDetailPath(clienteId)) : undefined,
           },
           { label: 'Mesas' },
         ]}
@@ -76,7 +74,7 @@ export default function ClienteMesasStandaloneScreen() {
           />
         )}
       </View>
-      <CobrancaAddBar label="Adicionar mesa" onPress={s.openNovaMesa} />
+      <MesasClienteToolbar onAddMesa={s.openNovaMesa} />
       {s.actionError ? (
         <Pressable style={styles.errorBanner} onPress={s.dismissActionError}>
           <ThemedText style={styles.errorBannerText}>{s.actionError}</ThemedText>
@@ -86,11 +84,6 @@ export default function ClienteMesasStandaloneScreen() {
             tintColor={FlowHubColors.white}
           />
         </Pressable>
-      ) : null}
-      {s.mesas.length > 0 ? (
-        <View style={styles.sectionHeader}>
-          <ThemedText style={styles.sectionTitle}>Mesas</ThemedText>
-        </View>
       ) : null}
     </>
   );
@@ -203,7 +196,7 @@ export default function ClienteMesasStandaloneScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
   list: { flex: 1 },
-  heroWrap: { marginTop: HomeLayout.heroOverlap, paddingHorizontal: Spacing.four, zIndex: 3 },
+  heroWrap: { marginTop: HomeLayout.heroOverlap, paddingHorizontal: Spacing.four, zIndex: 3, marginBottom: Spacing.two },
   heroSkeleton: {
     backgroundColor: FlowHubColors.white,
     borderRadius: Radius.xl,
@@ -223,19 +216,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
   },
   errorBannerText: { flex: 1, color: FlowHubColors.white, fontSize: 13, fontWeight: '600' },
-  sectionHeader: {
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.two,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: FlowHubColors.darkGray,
-    letterSpacing: 0.3,
-  },
   listContent: {
-    flexGrow: 1,
     gap: Spacing.two,
   },
   skeletonList: { paddingHorizontal: Spacing.four, gap: Spacing.two, paddingTop: Spacing.two },

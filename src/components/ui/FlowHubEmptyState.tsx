@@ -58,5 +58,5 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 18, fontWeight: '700', color: FlowHubColors.navy, textAlign: 'center' },
   text: { fontSize: 14, textAlign: 'center', lineHeight: 21, maxWidth: 300 },
-  cta: { marginTop: Spacing.two, alignSelf: 'stretch', maxWidth: 320, marginHorizontal: 0 },
+  cta: { marginTop: Spacing.two },
 });

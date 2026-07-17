@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontSize: 15, fontWeight: '800', color: FlowHubColors.petroleum },
   info: { flex: 1, gap: 4, minWidth: 0 },
-  nome: { fontSize: 16, fontWeight: '700', color: FlowHubColors.navy },
+  nome: { fontSize: 17, fontWeight: '800', color: FlowHubColors.navy },
   telefone: { fontSize: 13, color: FlowHubColors.darkGray },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, flexWrap: 'wrap' },
   meta: { fontSize: 12, fontWeight: '500', color: FlowHubColors.darkGray },

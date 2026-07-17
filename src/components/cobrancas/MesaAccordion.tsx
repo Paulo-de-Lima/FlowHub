@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { SymbolView } from 'expo-symbols';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { LayoutAnimation, Platform, Pressable, StyleSheet, UIManager, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -10,6 +10,7 @@ import Animated, {
 import { formatCurrency, saldoRegistro, sortRegistrosCronologico, isRegistroMaisRecente } from '@/components/cobrancas/cobrancas-utils';
 import { RegistroCard } from '@/components/cobrancas/RegistroCard';
 import { FlowHubAddButton } from '@/components/ui/FlowHubAddButton';
+import { FlowHubCollapsiblePanel } from '@/components/ui/FlowHubCollapsiblePanel';
 import { ThemedText } from '@/components/themed-text';
 import {
   cardShadowSoft,
@@ -22,6 +23,10 @@ import {
   Spacing,
 } from '@/constants/theme';
 import type { Mesa, RegistroMesa } from '@/services/api';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 type MesaAccordionProps = {
   mesa: Mesa;
@@ -49,6 +54,7 @@ export function MesaAccordion({
   const rotation = useSharedValue(expanded ? 90 : 0);
 
   useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     rotation.value = withTiming(expanded ? 90 : 0, { duration: 200 });
   }, [expanded, rotation]);
 
@@ -135,8 +141,7 @@ export function MesaAccordion({
         </Animated.View>
       </Pressable>
 
-      {expanded ? (
-        <View style={styles.body}>
+      <FlowHubCollapsiblePanel expanded={expanded} style={styles.body}>
           {mesa.registros.length === 0 ? (
             <View style={styles.emptyWrap}>
               <View style={styles.emptyIcon}>
@@ -182,24 +187,29 @@ export function MesaAccordion({
           )}
 
           {mesa.registros.length > 0 ? (
-            <FlowHubAddButton variant="secondary" label="Nova leitura" onPress={onNovaLeitura} />
-          ) : null}
-
-          {onDeleteMesa ? (
-            <Pressable
-              style={({ pressed }) => [styles.excluirMesaBtn, pressed && styles.pressed]}
-              onPress={onDeleteMesa}
-              accessibilityLabel="Excluir mesa">
-              <SymbolView
-                name={{ ios: 'trash', android: 'delete', web: 'delete' }}
-                size={14}
-                tintColor={FeatureColors.expense}
+            <View style={styles.footerActions}>
+              <FlowHubAddButton
+                variant="bar"
+                label="Nova leitura"
+                layout="fill"
+                onPress={onNovaLeitura}
+                style={styles.footerBtn}
               />
-              <ThemedText style={styles.excluirMesaText}>Excluir mesa</ThemedText>
-            </Pressable>
+              {onDeleteMesa ? (
+                <FlowHubAddButton
+                  variant="danger"
+                  label="Excluir mesa"
+                  leadingIcon="trash"
+                  showPlus={false}
+                  layout="fill"
+                  onPress={onDeleteMesa}
+                  accessibilityLabel="Excluir mesa"
+                  style={styles.footerBtn}
+                />
+              ) : null}
+            </View>
           ) : null}
-        </View>
-      ) : null}
+      </FlowHubCollapsiblePanel>
     </View>
   );
 }
@@ -370,18 +380,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: FlowHubColors.darkGray,
   },
-  emptyCtaBtn: { alignSelf: 'stretch', marginHorizontal: 0 },
-  excluirMesaBtn: {
+  emptyCtaBtn: { marginHorizontal: 0 },
+  footerActions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
+    alignItems: 'stretch',
+    gap: Spacing.two,
   },
-  excluirMesaText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: FeatureColors.expense,
+  footerBtn: {
+    flex: 1,
+    marginHorizontal: 0,
+    marginTop: 0,
+    marginBottom: 0,
   },
   pressed: { opacity: 0.88 },
 });

@@ -19,7 +19,6 @@ import { ClienteListCardSkeleton } from '@/components/clientes/ClienteListCardSk
 import { ClientesEmptyState } from '@/components/clientes/ClientesEmptyState';
 import { ClientesHeader } from '@/components/clientes/ClientesHeader';
 import { ClientesHeroCard } from '@/components/clientes/ClientesHeroCard';
-import { ClientesKpiStrip } from '@/components/clientes/ClientesKpiStrip';
 import { ClientesScreenBackdrop } from '@/components/clientes/ClientesScreenBackdrop';
 import { ClientesSearchBar } from '@/components/clientes/ClientesSearchBar';
 import { clienteDetailPath } from '@/components/clientes/route-utils';
@@ -46,7 +45,7 @@ export default function ClientesListScreen() {
 
   const listHeader = (
     <>
-      <ClientesHeader />
+      <ClientesHeader totalClientes={s.stats.total} />
       <View style={styles.heroWrap}>
         {s.loading && s.clientes.length === 0 ? (
           <View style={styles.heroSkeleton} />
@@ -59,11 +58,6 @@ export default function ClientesListScreen() {
         )}
       </View>
       <View style={styles.filtersBlock}>
-        <ClientesKpiStrip
-          comMesa={s.stats.comMesa}
-          emDia={s.stats.emDia}
-          pendentes={s.stats.comDivida}
-        />
         <ClientesSearchBar
           busca={s.busca}
           filtro={s.filtro}

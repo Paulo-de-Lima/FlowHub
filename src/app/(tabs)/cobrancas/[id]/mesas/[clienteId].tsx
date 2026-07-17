@@ -9,8 +9,6 @@ import {
 import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 
-import { CobrancaAddBar } from '@/components/cobrancas/CobrancaAddBar';
-import { CobrancaBreadcrumb } from '@/components/cobrancas/CobrancaBreadcrumb';
 import { CobrancaConfirmModal } from '@/components/cobrancas/CobrancaConfirmModal';
 import { ConfirmDeleteModal } from '@/components/cobrancas/ConfirmDeleteModal';
 import { FlowHubToast } from '@/components/cobrancas/FlowHubToast';
@@ -18,6 +16,7 @@ import { MesaAccordion } from '@/components/cobrancas/MesaAccordion';
 import { MesaAccordionSkeleton } from '@/components/cobrancas/MesaAccordionSkeleton';
 import { MesasClienteHeader } from '@/components/cobrancas/MesasClienteHeader';
 import { MesasClienteHeroCard } from '@/components/cobrancas/MesasClienteHeroCard';
+import { MesasClienteToolbar } from '@/components/cobrancas/MesasClienteToolbar';
 import { MesasEmptyState } from '@/components/cobrancas/MesasEmptyState';
 import { NovaLeituraModal } from '@/components/cobrancas/NovaLeituraModal';
 import { NovaMesaModal } from '@/components/cobrancas/NovaMesaModal';
@@ -39,7 +38,6 @@ export default function ClienteMesasScreen() {
   const listHeader = (
     <>
       <MesasClienteHeader
-        cobrancaNome={s.cobrancaNome}
         nome={s.clienteNome}
         mesasCount={s.stats.mesasCount}
         onBack={() => {
@@ -49,13 +47,14 @@ export default function ClienteMesasScreen() {
             router.navigate('/cobrancas');
           }
         }}
-      />
-      <CobrancaBreadcrumb
-        segments={[
+        breadcrumb={[
           { label: 'Cobranças', onPress: () => router.navigate(COBRANCAS_LIST_PATH) },
           {
             label: s.cobrancaNome || 'Viagem',
-            onPress: cobrancaId != null ? () => router.navigate(`/cobrancas/${cobrancaId}/clientes`) : undefined,
+            onPress:
+              cobrancaId != null
+                ? () => router.navigate(`/cobrancas/${cobrancaId}/clientes`)
+                : undefined,
           },
           { label: s.clienteNome || 'Cliente' },
         ]}
@@ -70,22 +69,20 @@ export default function ClienteMesasScreen() {
             mesasCount={s.stats.mesasCount}
             registrosPendentes={s.stats.registrosPendentes}
             cobrado={s.clienteCobrado}
-            marcandoCobrado={s.marcandoCobrado}
-            onMarcarCobrado={cobrancaId != null && !s.clienteCobrado ? s.openMarcarCobrado : undefined}
           />
         )}
       </View>
-      <CobrancaAddBar label="Adicionar mesa" onPress={s.openNovaMesa} />
+      <MesasClienteToolbar
+        onAddMesa={s.openNovaMesa}
+        onMarcarCobrado={cobrancaId != null && !s.clienteCobrado ? s.openMarcarCobrado : undefined}
+        marcandoCobrado={s.marcandoCobrado}
+        cobrado={s.clienteCobrado}
+      />
       {s.actionError ? (
         <Pressable style={styles.errorBanner} onPress={s.dismissActionError}>
           <ThemedText style={styles.errorBannerText}>{s.actionError}</ThemedText>
           <SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} size={14} tintColor={FlowHubColors.white} />
         </Pressable>
-      ) : null}
-      {s.mesas.length > 0 ? (
-        <View style={styles.sectionHeader}>
-          <ThemedText style={styles.sectionTitle}>Mesas</ThemedText>
-        </View>
       ) : null}
     </>
   );
@@ -206,7 +203,7 @@ export default function ClienteMesasScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: FlowHubColors.lightGray },
   list: { flex: 1 },
-  heroWrap: { marginTop: HomeLayout.heroOverlap, paddingHorizontal: Spacing.four, zIndex: 3 },
+  heroWrap: { marginTop: HomeLayout.heroOverlap, paddingHorizontal: Spacing.four, zIndex: 3, marginBottom: Spacing.two },
   heroSkeleton: {
     backgroundColor: FlowHubColors.white,
     borderRadius: Radius.xl,
@@ -226,10 +223,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
   },
   errorBannerText: { flex: 1, color: FlowHubColors.white, fontSize: 13, fontWeight: '600' },
-  sectionHeader: { paddingHorizontal: Spacing.four, paddingTop: Spacing.four, paddingBottom: Spacing.two },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: FlowHubColors.darkGray, letterSpacing: 0.3 },
   listContent: {
-    flexGrow: 1,
     gap: Spacing.two,
   },
   skeletonList: { paddingHorizontal: Spacing.four, gap: Spacing.two, paddingTop: Spacing.two },

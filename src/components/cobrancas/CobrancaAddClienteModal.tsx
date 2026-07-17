@@ -14,6 +14,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SymbolView } from 'expo-symbols';
 
 import { FlowHubModalHeaderStrip } from '@/components/ui/flowHubModalStyles';
+import { FlowHubSearchField } from '@/components/ui/FlowHubSearchField';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, modalWebCard, QuickActionColors, Radius, Spacing } from '@/constants/theme';
 import type { Cliente } from '@/services/api';
@@ -209,20 +210,11 @@ export function CobrancaAddClienteModal({
                 </>
               ) : (
                 <>
-                  <View style={styles.searchWrap}>
-                    <SymbolView
-                      name={{ ios: 'magnifyingglass', android: 'search', web: 'search' }}
-                      size={16}
-                      tintColor={FlowHubColors.darkGray}
-                    />
-                    <TextInput
-                      value={busca}
-                      onChangeText={setBusca}
-                      placeholder="Buscar cliente..."
-                      placeholderTextColor={FlowHubColors.darkGray}
-                      style={styles.searchInput}
-                    />
-                  </View>
+                  <FlowHubSearchField
+                    value={busca}
+                    onChangeText={setBusca}
+                    placeholder="Buscar cliente..."
+                  />
 
                   {allClientes.length === 0 ? (
                     <EmptyHint message="Nenhum cliente cadastrado. Use a aba Novo." />
@@ -339,22 +331,6 @@ const styles = StyleSheet.create({
   tabTextActive: { color: FlowHubColors.white },
   scroll: { gap: Spacing.two, paddingBottom: Spacing.two },
   tabContent: { gap: Spacing.two },
-  searchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    backgroundColor: FlowHubColors.lightGray,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.three,
-    borderWidth: 1,
-    borderColor: '#E2E8EE',
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: FlowHubColors.navy,
-  },
   clienteRow: {
     padding: Spacing.three,
     backgroundColor: FlowHubColors.lightGray,

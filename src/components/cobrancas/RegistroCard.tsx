@@ -51,21 +51,45 @@ export function RegistroCard({
       : saldo > 0
         ? styles.statusPendente
         : styles.statusOk;
+    const canRegistrarPagamento = !quitado;
 
     return (
-      <Pressable
-        style={({ pressed }) => [styles.compactRow, pressed && styles.pressed]}
-        onPress={onEditar}
-        accessibilityLabel={`Leitura de ${formatDate(registro.data_leitura)}, ${statusLabel}`}>
-        <ThemedText style={styles.compactDate}>{formatDate(registro.data_leitura)}</ThemedText>
-        <ThemedText style={styles.compactDot}>·</ThemedText>
-        <ThemedText style={styles.compactLeitura}>{formatLeituraMedidor(registro.leitura)}</ThemedText>
-        <ThemedText style={styles.compactDot}>·</ThemedText>
-        <ThemedText style={styles.compactValor}>{formatCurrency(registro.deve)}</ThemedText>
-        <View style={[styles.statusPill, statusStyle]}>
-          <ThemedText style={styles.statusText}>{statusLabel}</ThemedText>
-        </View>
-      </Pressable>
+      <View style={styles.compactWrap}>
+        <Pressable
+          style={({ pressed }) => [styles.compactRow, pressed && styles.pressed]}
+          onPress={onEditar}
+          accessibilityLabel={`Leitura de ${formatDate(registro.data_leitura)}, ${statusLabel}`}>
+          <ThemedText style={styles.compactDate}>{formatDate(registro.data_leitura)}</ThemedText>
+          <ThemedText style={styles.compactDot}>·</ThemedText>
+          <ThemedText style={styles.compactLeitura}>{formatLeituraMedidor(registro.leitura)}</ThemedText>
+          <ThemedText style={styles.compactDot}>·</ThemedText>
+          <ThemedText style={styles.compactValor}>{formatCurrency(registro.deve)}</ThemedText>
+          <View style={[styles.statusPill, statusStyle]}>
+            <ThemedText style={styles.statusText}>{statusLabel}</ThemedText>
+          </View>
+        </Pressable>
+
+        {canRegistrarPagamento ? (
+          <Pressable
+            style={({ pressed }) => [styles.pagamentoBtnCompact, pressed && styles.pressed]}
+            onPress={onRegistrarPagamento}
+            accessibilityLabel="Registrar pagamento">
+            <SymbolView
+              name={{ ios: 'banknote', android: 'payments', web: 'payments' }}
+              size={15}
+              tintColor={FlowHubColors.petroleum}
+            />
+            <ThemedText style={styles.pagamentoTextCompact}>
+              {parcial ? 'Ajustar pagamento' : 'Registrar pagamento'}
+            </ThemedText>
+            <SymbolView
+              name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+              size={12}
+              tintColor={FlowHubColors.darkGray}
+            />
+          </Pressable>
+        ) : null}
+      </View>
     );
   }
 
@@ -175,6 +199,9 @@ function ValorCell({
 }
 
 const styles = StyleSheet.create({
+  compactWrap: {
+    gap: Spacing.one,
+  },
   compactRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -357,5 +384,22 @@ const styles = StyleSheet.create({
     color: FlowHubColors.petroleum,
   },
   pagamentoTextQuitado: { color: FeatureColors.income },
+  pagamentoBtnCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    backgroundColor: FlowHubColors.lightGray,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: SemanticColors.borderSubtle,
+  },
+  pagamentoTextCompact: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: FlowHubColors.petroleum,
+  },
   pressed: { opacity: 0.88 },
 });

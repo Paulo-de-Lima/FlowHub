@@ -66,7 +66,6 @@ export default function HomeScreen() {
               ? { region: nextBilling.region, subtitle: nextBilling.subtitle }
               : null
           }
-          onNotificationPress={() => {}}
           onCobrancaPress={() => {
             if (nextBilling) {
               router.push(`/cobrancas/${nextBilling.id}/clientes`);

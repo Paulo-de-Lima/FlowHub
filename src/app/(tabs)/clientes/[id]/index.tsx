@@ -10,12 +10,10 @@ import {
 import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 
-import { CobrancaBreadcrumb } from '@/components/cobrancas/CobrancaBreadcrumb';
 import { ConfirmDeleteModal } from '@/components/cobrancas/ConfirmDeleteModal';
 import { FlowHubToast } from '@/components/cobrancas/FlowHubToast';
 import { formatTelefone } from '@/components/cobrancas/cobrancas-utils';
 import { ClienteDetailHeroCard } from '@/components/clientes/ClienteDetailHeroCard';
-import { FlowHubNavButton } from '@/components/ui/FlowHubAddButton';
 import { ClienteFormModal } from '@/components/clientes/ClienteFormModal';
 import { ClientesHeader } from '@/components/clientes/ClientesHeader';
 import { ClientesScreenBackdrop } from '@/components/clientes/ClientesScreenBackdrop';
@@ -23,6 +21,8 @@ import {
   CLIENTES_LIST_PATH,
   clienteMesasPath,
 } from '@/components/clientes/route-utils';
+import { FlowHubNavButton } from '@/components/ui/FlowHubAddButton';
+import { FlowHubHeaderActionButton } from '@/components/ui/FlowHubScreenHeader';
 import { useClienteDetailScreen } from '@/components/clientes/use-cliente-detail-screen';
 import type { ClienteFormData } from '@/components/clientes/use-clientes-screen';
 import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
@@ -31,6 +31,7 @@ import {
   cardShadowSoft,
   FlowHubColors,
   FlowHubPalette,
+  QuickActionColors,
   HomeLayout,
   Radius,
   Spacing,
@@ -146,13 +147,20 @@ export default function ClienteDetailScreen() {
             title={nome}
             subtitle="Detalhes do cliente"
             onBack={() => router.navigate(CLIENTES_LIST_PATH)}
-          />
-
-          <CobrancaBreadcrumb
-            segments={[
+            breadcrumb={[
               { label: 'Clientes', onPress: () => router.navigate(CLIENTES_LIST_PATH) },
               { label: nome },
             ]}
+            headerRight={
+              <FlowHubHeaderActionButton
+                icon={{ ios: 'pencil', android: 'edit', web: 'edit' }}
+                accessibilityLabel="Editar cliente"
+                onPress={() => {
+                  setFormError(null);
+                  setFormVisible(true);
+                }}
+              />
+            }
           />
 
           <View style={styles.heroWrap}>
@@ -173,31 +181,21 @@ export default function ClienteDetailScreen() {
                 label="CPF"
                 value={s.clienteBase?.cpf || '—'}
                 icon={{ ios: 'person.text.rectangle', android: 'badge', web: 'badge' }}
+                iconBg={QuickActionColors.background}
               />
               <DataRow
                 label="Telefone"
                 value={formatTelefone(s.clienteBase?.numero)}
                 icon={{ ios: 'phone.fill', android: 'phone', web: 'phone' }}
+                iconBg={FlowHubPalette.kpiIconBgAlt}
               />
               <DataRow
                 label="Endereço"
                 value={s.clienteBase?.endereco || '—'}
                 icon={{ ios: 'mappin.and.ellipse', android: 'location_on', web: 'location_on' }}
+                iconBg={FlowHubPalette.surfaceTint}
+                isLast
               />
-
-              <Pressable
-                style={styles.editBtn}
-                onPress={() => {
-                  setFormError(null);
-                  setFormVisible(true);
-                }}>
-                <SymbolView
-                  name={{ ios: 'pencil', android: 'edit', web: 'edit' }}
-                  size={16}
-                  tintColor={FlowHubColors.petroleum}
-                />
-                <ThemedText style={styles.editBtnText}>Editar dados</ThemedText>
-              </Pressable>
             </View>
           </View>
 
@@ -260,14 +258,20 @@ function DataRow({
   label,
   value,
   icon,
+  iconBg,
+  isLast = false,
 }: {
   label: string;
   value: string;
   icon: SymbolViewProps['name'];
+  iconBg: string;
+  isLast?: boolean;
 }) {
   return (
-    <View style={styles.dataRow}>
-      <SymbolView name={icon} size={16} tintColor={FlowHubColors.petroleum} />
+    <View style={[styles.dataRow, isLast && styles.dataRowLast]}>
+      <View style={[styles.dataIconWrap, { backgroundColor: iconBg }]}>
+        <SymbolView name={icon} size={18} tintColor={FlowHubColors.petroleum} />
+      </View>
       <View style={styles.dataContent}>
         <ThemedText style={styles.dataLabel}>{label}</ThemedText>
         <ThemedText style={styles.dataValue}>{value}</ThemedText>
@@ -298,24 +302,43 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: FlowHubColors.white,
     borderRadius: Radius.lg,
-    padding: Spacing.four,
-    gap: Spacing.three,
     borderWidth: 1,
     borderColor: FlowHubPalette.borderSubtle,
+    overflow: 'hidden',
   },
-  dataRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
-  dataContent: { flex: 1, gap: 4 },
-  dataLabel: { fontSize: 12, fontWeight: '600', color: FlowHubColors.darkGray },
-  dataValue: { fontSize: 15, fontWeight: '600', color: FlowHubColors.navy },
-  editBtn: {
+  dataRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-    alignSelf: 'flex-start',
-    paddingVertical: Spacing.one,
-    minHeight: 44,
+    alignItems: 'flex-start',
+    gap: Spacing.three,
+    padding: Spacing.three,
+    borderBottomWidth: 1,
+    borderBottomColor: FlowHubPalette.borderSubtle,
   },
-  editBtnText: { fontSize: 14, fontWeight: '700', color: FlowHubColors.petroleum },
+  dataRowLast: {
+    borderBottomWidth: 0,
+  },
+  dataIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  dataContent: { flex: 1, gap: 4, minWidth: 0 },
+  dataLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: FlowHubColors.petroleum,
+  },
+  dataValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    lineHeight: 22,
+    color: FlowHubColors.navy,
+  },
   cta: { marginTop: Spacing.four, marginHorizontal: Spacing.four },
   errorText: { color: FlowHubColors.petroleum, textAlign: 'center', paddingHorizontal: Spacing.four },
   retryBtn: {

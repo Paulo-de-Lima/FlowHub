@@ -3,14 +3,13 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
+import { FlowHubHeroCardFrame } from '@/components/ui/FlowHubHeroCardFrame';
 import { ThemedText } from '@/components/themed-text';
 import {
-  cardShadow,
   ClientesTypography,
   FeatureColors,
   FlowHubColors,
   FlowHubPalette,
-  Radius,
   Spacing,
   Typography,
 } from '@/constants/theme';
@@ -51,34 +50,34 @@ export function ClienteDetailHeroCard({
   const valueColor = totalDeve > 0 ? FeatureColors.expense : FeatureColors.income;
 
   return (
-    <View style={[styles.container, cardShadow]}>
-      <ThemedText style={[styles.eyebrow, { color: valueColor }]}>Total em aberto</ThemedText>
-      <ThemedText style={[styles.heroValue, { color: valueColor }]}>
-        {formatCurrency(totalDeve)}
-      </ThemedText>
-
-      <View style={styles.metricsRow}>
-        <ThemedText style={styles.metricText}>
-          Já pago:{' '}
-          <ThemedText style={styles.metricValue}>{formatCurrency(totalPago)}</ThemedText>
+    <FlowHubHeroCardFrame>
+      <View style={styles.container}>
+        <ThemedText style={[styles.eyebrow, { color: valueColor }]}>Total em aberto</ThemedText>
+        <ThemedText style={[styles.heroValue, { color: valueColor }]}>
+          {formatCurrency(totalDeve)}
         </ThemedText>
-        <ThemedText style={styles.metricDot}>·</ThemedText>
-        <ThemedText style={styles.metricText}>{mesasLabel}</ThemedText>
-      </View>
 
-      <View style={styles.progressTrack}>
-        <Animated.View style={[styles.progressFill, fillStyle]} />
-      </View>
+        <View style={styles.metricsRow}>
+          <ThemedText style={styles.metricText}>
+            Já pago:{' '}
+            <ThemedText style={styles.metricValue}>{formatCurrency(totalPago)}</ThemedText>
+          </ThemedText>
+          <ThemedText style={styles.metricDot}>·</ThemedText>
+          <ThemedText style={styles.metricText}>{mesasLabel}</ThemedText>
+        </View>
 
-      <ThemedText style={styles.hint}>{pendentesLabel}</ThemedText>
-    </View>
+        <View style={styles.progressTrack}>
+          <Animated.View style={[styles.progressFill, fillStyle]} />
+        </View>
+
+        <ThemedText style={styles.hint}>{pendentesLabel}</ThemedText>
+      </View>
+    </FlowHubHeroCardFrame>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: FlowHubColors.white,
-    borderRadius: Radius.xl,
     padding: Spacing.four,
     gap: Spacing.two,
   },

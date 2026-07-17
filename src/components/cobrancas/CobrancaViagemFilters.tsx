@@ -1,9 +1,8 @@
-import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { FlowHubColors, FlowHubPalette, Radius, Spacing, Typography } from '@/constants/theme';
+import { FlowHubSearchField } from '@/components/ui/FlowHubSearchField';
+import { FlowHubColors, FlowHubPalette, Spacing, Typography } from '@/constants/theme';
 
 export type CobrancaViagemFiltro = 'todos' | 'pendentes' | 'cobrados';
 
@@ -28,26 +27,13 @@ export function CobrancaViagemFilters({
   onFiltroChange,
   onBuscaChange,
 }: CobrancaViagemFiltersProps) {
-  const [focused, setFocused] = useState(false);
-
   return (
     <View style={styles.wrap}>
-      <View style={[styles.searchWrap, focused && styles.searchWrapFocused]}>
-        <SymbolView
-          name={{ ios: 'magnifyingglass', android: 'search', web: 'search' }}
-          size={18}
-          tintColor={focused ? FlowHubColors.turquoise : FlowHubColors.darkGray}
-        />
-        <TextInput
-          value={busca}
-          onChangeText={onBuscaChange}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder="Buscar por nome..."
-          placeholderTextColor={FlowHubColors.darkGray}
-          style={styles.search}
-        />
-      </View>
+      <FlowHubSearchField
+        value={busca}
+        onChangeText={onBuscaChange}
+        placeholder="Buscar por nome..."
+      />
 
       <View style={styles.chips}>
         {FILTROS.map((f) => {
@@ -74,24 +60,6 @@ export function CobrancaViagemFilters({
 
 const styles = StyleSheet.create({
   wrap: { gap: Spacing.three },
-  searchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    backgroundColor: FlowHubPalette.surfaceSunken,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.three,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-    minHeight: 44,
-  },
-  searchWrapFocused: { borderColor: FlowHubColors.turquoise },
-  search: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: FlowHubColors.navy,
-  },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.one },
   chip: {
     paddingHorizontal: 14,

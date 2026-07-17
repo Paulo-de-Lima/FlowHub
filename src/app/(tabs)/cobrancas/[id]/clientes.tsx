@@ -11,7 +11,6 @@ import { SymbolView } from 'expo-symbols';
 
 import { CobrancaAddBar } from '@/components/cobrancas/CobrancaAddBar';
 import { CobrancaAddClienteModal } from '@/components/cobrancas/CobrancaAddClienteModal';
-import { CobrancaBreadcrumb } from '@/components/cobrancas/CobrancaBreadcrumb';
 import { CobrancaClienteCard } from '@/components/cobrancas/CobrancaClienteCard';
 import { CobrancaClienteCardSkeleton } from '@/components/cobrancas/CobrancaClienteCardSkeleton';
 import { CobrancaClientesEmptyState } from '@/components/cobrancas/CobrancaClientesEmptyState';
@@ -49,9 +48,7 @@ export default function CobrancaClientesScreen() {
         intervaloDias={s.intervaloDias}
         dataViagem={s.dataViagem}
         onBack={() => router.navigate(COBRANCAS_LIST_PATH)}
-      />
-      <CobrancaBreadcrumb
-        segments={[
+        breadcrumb={[
           { label: 'Cobranças', onPress: () => router.navigate(COBRANCAS_LIST_PATH) },
           { label: s.cobrancaNome || 'Viagem' },
         ]}

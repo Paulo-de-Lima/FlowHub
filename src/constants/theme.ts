@@ -184,6 +184,36 @@ export const HomeLayout = {
   heroOverlap: -32,
 } as const;
 
+/** Tipografia e dimensões dos screen headers (gradiente). */
+export const HeaderTypography = {
+  rootTitle: { fontSize: 24, fontWeight: '800' as const, lineHeight: 30 },
+  homeTitle: { fontSize: 26, fontWeight: '700' as const, lineHeight: 32 },
+  detailTitle: { fontSize: 21, fontWeight: '700' as const, lineHeight: 27 },
+  subtitle: { fontSize: 14, fontWeight: '500' as const, lineHeight: 20 },
+  footer: { fontSize: 12, fontWeight: '600' as const, lineHeight: 16 },
+  breadcrumb: { fontSize: 12, fontWeight: '600' as const, lineHeight: 16 },
+} as const;
+
+export const HeaderTokens = {
+  topRowMinHeight: 44,
+  actionButtonSize: 44,
+  contentMaxWidth: 800,
+  bottomHairline: 'rgba(255, 255, 255, 0.08)',
+} as const;
+
+export const headerBottomShadow = Platform.select({
+  web: {
+    boxShadow: '0 1px 0 rgba(255,255,255,0.08), 0 4px 12px rgba(11, 31, 58, 0.06)',
+  },
+  default: {
+    shadowColor: FlowHubColors.navy,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+});
+
 export const Typography = {
   heroValue: {
     fontSize: 36,

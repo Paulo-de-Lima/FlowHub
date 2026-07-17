@@ -15,6 +15,8 @@ import {
 import { SymbolView } from 'expo-symbols';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { FlowHubCollapsiblePanel } from '@/components/ui/FlowHubCollapsiblePanel';
+
 import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
 import { RankingBarChart } from '@/components/cobrancas/RankingBarChart';
 import { FlowHubSectionHeader } from '@/components/ui/FlowHubSectionHeader';
@@ -118,8 +120,7 @@ export function CobrancaDashboard({ data, loading, defaultExpanded = true }: Cob
         </Animated.View>
       </Pressable>
 
-      {expanded ? (
-        <View style={styles.body}>
+      <FlowHubCollapsiblePanel expanded={expanded} style={styles.body}>
           {loading ? (
             <View style={styles.emptyChart}>
               <SymbolView
@@ -197,8 +198,7 @@ export function CobrancaDashboard({ data, loading, defaultExpanded = true }: Cob
               </View>
             </>
           )}
-        </View>
-      ) : null}
+      </FlowHubCollapsiblePanel>
     </View>
   );
 }

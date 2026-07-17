@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     gap: Spacing.four,
   },
-  webAddBar: { marginHorizontal: 0, marginTop: Spacing.four, marginBottom: Spacing.four },
+  webAddBar: { marginHorizontal: 0, marginTop: 0, marginBottom: Spacing.two },
   listContent: {
     flexGrow: 1,
   },
