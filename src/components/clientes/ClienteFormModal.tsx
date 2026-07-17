@@ -1,4 +1,5 @@
-import React from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -14,10 +15,11 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import {
   cardShadowSoft,
+  FeatureColors,
   FlowHubColors,
+  FlowHubPalette,
   modalWebCard,
   Radius,
-  SemanticColors,
   Spacing,
 } from '@/constants/theme';
 
@@ -75,6 +77,7 @@ export function ClienteFormModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.overlayPress} onPress={onClose}>
           <Pressable style={[styles.card, cardShadowSoft]} onPress={(e) => e.stopPropagation()}>
+            <LinearGradient colors={[...FlowHubPalette.gradientHeader]} style={styles.headerStrip} />
             <ThemedText style={styles.title}>
               {isEdit ? 'Editar cliente' : 'Novo cliente'}
             </ThemedText>
@@ -141,6 +144,8 @@ function Field({
   keyboardType?: 'default' | 'number-pad' | 'phone-pad';
   autoCapitalize?: 'none' | 'words' | 'sentences';
 }) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <View style={styles.field}>
       <ThemedText style={styles.label}>{label}</ThemedText>
@@ -149,8 +154,10 @@ function Field({
         onChangeText={onChangeText}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         placeholderTextColor={FlowHubColors.darkGray}
-        style={styles.input}
+        style={[styles.input, focused && styles.inputFocused]}
       />
     </View>
   );
@@ -160,57 +167,75 @@ const styles = StyleSheet.create({
   overlay: { flex: 1 },
   overlayPress: {
     flex: 1,
-    backgroundColor: 'rgba(11, 31, 58, 0.45)',
+    backgroundColor: 'rgba(11, 31, 58, 0.5)',
     justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
     padding: Platform.OS === 'web' ? Spacing.four : 0,
   },
   card: {
-    backgroundColor: FlowHubColors.white,
+    backgroundColor: FlowHubPalette.surfaceElevated,
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
+    paddingTop: Spacing.three,
     paddingBottom: Spacing.five,
     maxHeight: '90%',
+    overflow: 'hidden',
     ...modalWebCard,
     ...(Platform.OS === 'web' ? { borderRadius: Radius.xl } : {}),
   },
+  headerStrip: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+  },
   title: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     color: FlowHubColors.navy,
     marginBottom: Spacing.three,
+    marginTop: Spacing.one,
   },
   form: { gap: Spacing.three, paddingBottom: Spacing.two },
   field: { gap: Spacing.one },
   label: { fontSize: 14, fontWeight: '600', color: FlowHubColors.navy },
   input: {
-    backgroundColor: FlowHubColors.lightGray,
+    backgroundColor: FlowHubPalette.surfaceSunken,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.three,
     paddingVertical: 14,
     fontSize: 16,
     color: FlowHubColors.navy,
-    borderWidth: 1,
-    borderColor: SemanticColors.borderSubtle,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    minHeight: 48,
+  },
+  inputFocused: {
+    backgroundColor: FlowHubPalette.surfaceElevated,
+    borderColor: FlowHubColors.turquoise,
   },
   error: { color: FlowHubColors.petroleum, fontSize: 14 },
   destructiveBtn: {
     borderRadius: Radius.md,
     paddingVertical: 14,
     alignItems: 'center',
-    backgroundColor: '#FDEBEA',
+    backgroundColor: FlowHubPalette.expenseBg,
     borderWidth: 1,
-    borderColor: '#F5C6C3',
+    borderColor: 'rgba(220, 38, 38, 0.2)',
+    minHeight: 48,
+    justifyContent: 'center',
   },
-  destructiveBtnText: { color: '#C0392B', fontWeight: '700', fontSize: 15 },
+  destructiveBtnText: { color: FeatureColors.expense, fontWeight: '700', fontSize: 15 },
   actions: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.two },
   cancelBtn: {
     flex: 1,
     borderRadius: Radius.md,
     paddingVertical: 14,
     alignItems: 'center',
-    backgroundColor: FlowHubColors.lightGray,
+    backgroundColor: FlowHubPalette.surfaceSunken,
+    minHeight: 48,
+    justifyContent: 'center',
   },
   cancelText: { color: FlowHubColors.darkGray, fontWeight: '700', fontSize: 15 },
   saveBtn: {
@@ -219,6 +244,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     backgroundColor: FlowHubColors.navy,
+    minHeight: 48,
+    justifyContent: 'center',
   },
   saveText: { color: FlowHubColors.white, fontWeight: '700', fontSize: 15 },
   btnDisabled: { opacity: 0.7 },

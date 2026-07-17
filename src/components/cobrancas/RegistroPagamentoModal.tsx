@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
+import { FlowHubModalHeaderStrip } from '@/components/ui/flowHubModalStyles';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FeatureColors, FlowHubColors, Radius, Spacing } from '@/constants/theme';
 import type { RegistroMesa } from '@/services/api';
@@ -72,6 +73,7 @@ export function RegistroPagamentoModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.overlayPress} onPress={onClose}>
           <Pressable style={[styles.card, cardShadowSoft]} onPress={(e) => e.stopPropagation()}>
+            <FlowHubModalHeaderStrip />
             <ThemedText style={styles.title}>Registrar pagamento</ThemedText>
             {registro ? (
               <ThemedText style={styles.context} themeColor="textSecondary">

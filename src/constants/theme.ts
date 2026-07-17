@@ -11,6 +11,40 @@ export const FlowHubColors = {
   darkGray: '#394A5A',
 } as const;
 
+/** Derivados harmoniosos da paleta FlowHub — usar com parcimônia. */
+export const FlowHubPalette = {
+  surfaceElevated: FlowHubColors.white,
+  surfaceSunken: '#EEF2F6',
+  borderSubtle: 'rgba(57, 74, 90, 0.12)',
+  gradientHeader: [FlowHubColors.navy, FlowHubColors.petroleum] as const,
+  expenseBg: '#FEF2F2',
+  incomeBg: '#E8FAFA',
+  whiteMuted: 'rgba(255, 255, 255, 0.75)',
+  whiteSubtle: 'rgba(255, 255, 255, 0.12)',
+  chartTurquoise: FlowHubColors.turquoise,
+  chartPetroleum: FlowHubColors.petroleum,
+  chartExpense: '#EF4444',
+  surfaceTint: 'rgba(20, 200, 196, 0.08)',
+  surfaceMuted: '#EEF2F6',
+  actionPrimary: FlowHubColors.navy,
+  actionPrimaryPressed: '#091528',
+  kpiIconBg: 'rgba(20, 200, 196, 0.12)',
+  kpiIconBgAlt: 'rgba(31, 78, 109, 0.12)',
+  sectionDivider: 'rgba(57, 74, 90, 0.12)',
+} as const;
+
+export const ClientesTypography = {
+  heroValue: { fontSize: 36, fontWeight: '800' as const, lineHeight: 42, letterSpacing: -0.5 },
+  kpiValue: { fontSize: 22, fontWeight: '800' as const, lineHeight: 26 },
+  kpiLabel: { fontSize: 12, fontWeight: '600' as const, lineHeight: 16 },
+  sectionEyebrow: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase' as const,
+  },
+} as const;
+
 export const QuickActionColors = {
   icon: FlowHubColors.petroleum,
   background: '#E0F9F8',
@@ -67,6 +101,19 @@ export const cardShadowSoft = Platform.select({
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
+  },
+});
+
+export const fabShadow = Platform.select({
+  web: {
+    boxShadow: '0 6px 20px rgba(11, 31, 58, 0.22)',
+  },
+  default: {
+    shadowColor: FlowHubColors.navy,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 8,
   },
 });
 

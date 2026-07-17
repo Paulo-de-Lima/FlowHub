@@ -2,7 +2,15 @@ import { StyleSheet, View } from 'react-native';
 
 import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
 import { ThemedText } from '@/components/themed-text';
-import { cardShadow, FeatureColors, FlowHubColors, Radius, Spacing } from '@/constants/theme';
+import {
+  cardShadow,
+  ClientesTypography,
+  FeatureColors,
+  FlowHubColors,
+  FlowHubPalette,
+  Radius,
+  Spacing,
+} from '@/constants/theme';
 
 type ClientesHeroCardProps = {
   total: number;
@@ -46,18 +54,34 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   eyebrow: {
-    fontSize: 11,
-    fontWeight: '700',
+    ...ClientesTypography.sectionEyebrow,
     color: FlowHubColors.petroleum,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
-  heroValue: { fontSize: 36, fontWeight: '800', color: FlowHubColors.navy, lineHeight: 42 },
-  heroLabel: { fontSize: 14, fontWeight: '500', color: FlowHubColors.darkGray, marginBottom: Spacing.two },
-  metricsRow: { flexDirection: 'row', alignItems: 'center', paddingTop: Spacing.two, borderTopWidth: 1, borderTopColor: '#E8EDF2' },
+  heroValue: {
+    ...ClientesTypography.heroValue,
+    color: FlowHubColors.navy,
+  },
+  heroLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: FlowHubColors.darkGray,
+    marginBottom: Spacing.two,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: Spacing.two,
+    borderTopWidth: 1,
+    borderTopColor: FlowHubPalette.borderSubtle,
+  },
   metric: { flex: 1, gap: 4 },
-  metricLabel: { fontSize: 11, fontWeight: '600', color: FlowHubColors.darkGray },
-  metricValue: { fontSize: 22, fontWeight: '800' },
+  metricLabel: { ...ClientesTypography.kpiLabel, color: FlowHubColors.darkGray },
+  metricValue: { ...ClientesTypography.kpiValue },
   metricValueCompact: { fontSize: 16, fontWeight: '800' },
-  divider: { width: 1, height: 40, backgroundColor: '#E8EDF2', marginHorizontal: Spacing.two },
+  divider: {
+    width: 1,
+    height: 36,
+    backgroundColor: FlowHubPalette.borderSubtle,
+    marginHorizontal: Spacing.two,
+  },
 });

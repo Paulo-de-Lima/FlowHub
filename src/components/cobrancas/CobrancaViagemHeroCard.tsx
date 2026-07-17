@@ -2,7 +2,14 @@ import { StyleSheet, View } from 'react-native';
 
 import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
 import { ThemedText } from '@/components/themed-text';
-import { cardShadow, FlowHubColors, Radius, Spacing, Typography } from '@/constants/theme';
+import {
+  cardShadow,
+  ClientesTypography,
+  FlowHubColors,
+  FlowHubPalette,
+  Radius,
+  Spacing,
+} from '@/constants/theme';
 
 type CobrancaViagemHeroCardProps = {
   aReceber: number;
@@ -45,28 +52,27 @@ const styles = StyleSheet.create({
     backgroundColor: FlowHubColors.white,
     borderRadius: Radius.xl,
     padding: Spacing.four,
-    gap: Spacing.two,
+    gap: Spacing.one,
   },
   eyebrow: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: FlowHubColors.navy,
+    ...ClientesTypography.sectionEyebrow,
+    color: FlowHubColors.petroleum,
   },
   heroValue: {
-    ...Typography.heroValue,
-    fontSize: 28,
-    lineHeight: 34,
+    ...ClientesTypography.heroValue,
     color: FlowHubColors.navy,
+    marginTop: Spacing.one,
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     color: FlowHubColors.darkGray,
     lineHeight: 18,
+    marginBottom: Spacing.one,
   },
   progressTrack: {
-    height: 6,
-    backgroundColor: '#E2E8EE',
+    height: 5,
+    backgroundColor: FlowHubPalette.surfaceSunken,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -80,5 +86,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: FlowHubColors.petroleum,
     lineHeight: 17,
+    marginTop: Spacing.one,
   },
 });

@@ -1,8 +1,19 @@
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
 import { ThemedText } from '@/components/themed-text';
-import { cardShadow, FeatureColors, FlowHubColors, Radius, Spacing, Typography } from '@/constants/theme';
+import {
+  cardShadow,
+  ClientesTypography,
+  FeatureColors,
+  FlowHubColors,
+  FlowHubPalette,
+  Radius,
+  Spacing,
+  Typography,
+} from '@/constants/theme';
 
 type ClienteDetailHeroCardProps = {
   totalDeve: number;
@@ -19,6 +30,15 @@ export function ClienteDetailHeroCard({
 }: ClienteDetailHeroCardProps) {
   const totalValor = totalPago + totalDeve;
   const progressPct = totalValor > 0 ? totalPago / totalValor : 0;
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withTiming(progressPct, { duration: 300 });
+  }, [progress, progressPct]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
 
   const mesasLabel = qtdMesas === 1 ? '1 mesa' : `${qtdMesas} mesas`;
   const pendentesLabel =
@@ -28,21 +48,26 @@ export function ClienteDetailHeroCard({
         ? '1 leitura pendente'
         : `${registrosPendentes} leituras pendentes`;
 
+  const valueColor = totalDeve > 0 ? FeatureColors.expense : FeatureColors.income;
+
   return (
     <View style={[styles.container, cardShadow]}>
-      <ThemedText style={styles.eyebrow}>Total em aberto</ThemedText>
-      <ThemedText style={styles.heroValue}>{formatCurrency(totalDeve)}</ThemedText>
+      <ThemedText style={[styles.eyebrow, { color: valueColor }]}>Total em aberto</ThemedText>
+      <ThemedText style={[styles.heroValue, { color: valueColor }]}>
+        {formatCurrency(totalDeve)}
+      </ThemedText>
 
       <View style={styles.metricsRow}>
         <ThemedText style={styles.metricText}>
-          Já pago: <ThemedText style={styles.metricValue}>{formatCurrency(totalPago)}</ThemedText>
+          Já pago:{' '}
+          <ThemedText style={styles.metricValue}>{formatCurrency(totalPago)}</ThemedText>
         </ThemedText>
         <ThemedText style={styles.metricDot}>·</ThemedText>
         <ThemedText style={styles.metricText}>{mesasLabel}</ThemedText>
       </View>
 
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${progressPct * 100}%` }]} />
+        <Animated.View style={[styles.progressFill, fillStyle]} />
       </View>
 
       <ThemedText style={styles.hint}>{pendentesLabel}</ThemedText>
@@ -58,17 +83,12 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   eyebrow: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: FeatureColors.expense,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    ...ClientesTypography.sectionEyebrow,
   },
   heroValue: {
     ...Typography.heroValue,
     fontSize: 28,
     lineHeight: 34,
-    color: FeatureColors.expense,
   },
   metricsRow: {
     flexDirection: 'row',
@@ -83,7 +103,7 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     fontWeight: '700',
-    color: '#16A34A',
+    color: FeatureColors.income,
   },
   metricDot: {
     fontSize: 13,
@@ -91,13 +111,13 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 6,
-    backgroundColor: '#E2E8EE',
+    backgroundColor: FlowHubPalette.surfaceSunken,
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#16A34A',
+    backgroundColor: FeatureColors.income,
     borderRadius: 3,
   },
   hint: {

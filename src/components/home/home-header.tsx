@@ -1,15 +1,11 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
-import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { HomeBillingPreview } from '@/components/home/home-mock';
-import { getLogoDimensions, LOGO_SOURCE } from '@/components/home/home-utils';
+import { FlowHubScreenHeader } from '@/components/ui/FlowHubScreenHeader';
+import { HeaderLogoNotificationRow } from '@/components/ui/HeaderLogoNotificationRow';
 import { ThemedText } from '@/components/themed-text';
-import { FlowHubColors, HomeLayout, Radius, Spacing, Typography } from '@/constants/theme';
-
-const TOP_BAR_SIZE = 40;
+import { FlowHubColors, FlowHubPalette, Radius, Spacing } from '@/constants/theme';
 
 type HomeHeaderProps = {
   firstName: string;
@@ -26,138 +22,65 @@ export function HomeHeader({
   onNotificationPress,
   onCobrancaPress,
 }: HomeHeaderProps) {
-  const insets = useSafeAreaInsets();
-  const logoSize = getLogoDimensions(TOP_BAR_SIZE);
-  const horizontalPadding = insets.left + Spacing.four;
-
   return (
-    <LinearGradient
-      colors={[FlowHubColors.navy, FlowHubColors.petroleum]}
-      style={[
-        styles.container,
-        {
-          paddingTop: insets.top + Spacing.two,
-          paddingBottom: Spacing.five + Math.abs(HomeLayout.heroOverlap),
-          paddingLeft: horizontalPadding,
-          paddingRight: insets.right + Spacing.four,
-        },
-      ]}>
-      <View style={styles.topRow}>
-        <View style={styles.logoSlot}>
-          <Image
-            source={LOGO_SOURCE}
-            style={logoSize}
-            contentFit="contain"
-            accessibilityLabel="FlowHub"
-          />
-        </View>
+    <FlowHubScreenHeader
+      title={`Olá, ${firstName}!`}
+      subtitle={`Resumo de ${monthLabel}`}
+      headerTop={<HeaderLogoNotificationRow onNotificationPress={onNotificationPress} />}
+      headerBottom={
         <Pressable
-          style={({ pressed }) => [styles.notificationButton, pressed && styles.pressed]}
-          onPress={onNotificationPress}
-          accessibilityLabel="Notificações">
-          <SymbolView
-            name={{ ios: 'bell.fill', android: 'notifications', web: 'notifications' }}
-            size={20}
-            tintColor={FlowHubColors.white}
-          />
-        </Pressable>
-      </View>
-
-      <View style={styles.greetingBlock}>
-        <ThemedText style={styles.greeting}>Olá, {firstName}!</ThemedText>
-        <ThemedText style={styles.subtitle}>Resumo de {monthLabel}</ThemedText>
-      </View>
-
-      <Pressable
-        style={({ pressed }) => [styles.cobrancaCard, pressed && styles.pressed]}
-        onPress={onCobrancaPress}>
-        <View style={styles.cobrancaAccent} />
-        <View style={styles.cobrancaContent}>
-          {nextBilling ? (
-            <>
-              <View style={styles.cobrancaTitleRow}>
-                <SymbolView
-                  name={{ ios: 'map.fill', android: 'map', web: 'map' }}
-                  size={16}
-                  tintColor={FlowHubColors.turquoise}
-                />
-                <ThemedText style={styles.cobrancaTitle}>
-                  Próxima cobrança: {nextBilling.region}
+          style={({ pressed }) => [styles.cobrancaCard, pressed && styles.pressed]}
+          onPress={onCobrancaPress}>
+          <View style={styles.cobrancaAccent} />
+          <View style={styles.cobrancaContent}>
+            {nextBilling ? (
+              <>
+                <View style={styles.cobrancaTitleRow}>
+                  <SymbolView
+                    name={{ ios: 'map.fill', android: 'map', web: 'map' }}
+                    size={16}
+                    tintColor={FlowHubColors.turquoise}
+                  />
+                  <ThemedText style={styles.cobrancaTitle}>
+                    Próxima cobrança: {nextBilling.region}
+                  </ThemedText>
+                </View>
+                <ThemedText style={styles.cobrancaSubtitle}>{nextBilling.subtitle}</ThemedText>
+              </>
+            ) : (
+              <>
+                <View style={styles.cobrancaTitleRow}>
+                  <SymbolView
+                    name={{ ios: 'calendar.badge.plus', android: 'event', web: 'event' }}
+                    size={16}
+                    tintColor={FlowHubColors.turquoise}
+                  />
+                  <ThemedText style={styles.cobrancaTitle}>Nenhuma cobrança agendada</ThemedText>
+                </View>
+                <ThemedText style={styles.cobrancaSubtitle}>
+                  Toque para planejar sua próxima rota
                 </ThemedText>
-              </View>
-              <ThemedText style={styles.cobrancaSubtitle}>{nextBilling.subtitle}</ThemedText>
-            </>
-          ) : (
-            <>
-              <View style={styles.cobrancaTitleRow}>
-                <SymbolView
-                  name={{ ios: 'calendar.badge.plus', android: 'event', web: 'event' }}
-                  size={16}
-                  tintColor={FlowHubColors.turquoise}
-                />
-                <ThemedText style={styles.cobrancaTitle}>Nenhuma cobrança agendada</ThemedText>
-              </View>
-              <ThemedText style={styles.cobrancaSubtitle}>
-                Toque para planejar sua próxima rota
-              </ThemedText>
-            </>
-          )}
-        </View>
-        <View style={styles.cobrancaChevronWrap}>
-          <SymbolView
-            name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-            size={14}
-            tintColor={FlowHubColors.turquoise}
-          />
-        </View>
-      </Pressable>
-    </LinearGradient>
+              </>
+            )}
+          </View>
+          <View style={styles.cobrancaChevronWrap}>
+            <SymbolView
+              name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+              size={14}
+              tintColor={FlowHubColors.turquoise}
+            />
+          </View>
+        </Pressable>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    borderBottomLeftRadius: HomeLayout.headerBottomRadius,
-    borderBottomRightRadius: HomeLayout.headerBottomRadius,
-    overflow: 'hidden',
-    gap: Spacing.three,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: TOP_BAR_SIZE,
-  },
-  logoSlot: {
-    width: TOP_BAR_SIZE,
-    height: TOP_BAR_SIZE,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  notificationButton: {
-    width: TOP_BAR_SIZE,
-    height: TOP_BAR_SIZE,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  greetingBlock: {
-    gap: Spacing.one,
-  },
-  greeting: {
-    ...Typography.greeting,
-    color: FlowHubColors.white,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.72)',
-  },
   cobrancaCard: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: FlowHubPalette.whiteSubtle,
     borderRadius: Radius.md,
     overflow: 'hidden',
   },
@@ -188,10 +111,7 @@ const styles = StyleSheet.create({
   },
   cobrancaSubtitle: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.65)',
+    color: FlowHubPalette.whiteMuted,
   },
-  pressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.99 }],
-  },
+  pressed: { opacity: 0.88, transform: [{ scale: 0.98 }] },
 });

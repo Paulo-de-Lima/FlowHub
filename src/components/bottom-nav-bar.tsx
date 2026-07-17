@@ -132,9 +132,8 @@ export function BottomNavBar({ state, navigation }: BottomNavBarProps) {
       style={[
         styles.shell,
         Platform.OS === 'web' ? styles.shellWeb : styles.shellNative,
-        { paddingBottom: bottomInset + TAB_BAR_FLOATING_MARGIN },
-      ]}
-      pointerEvents="box-none">
+        { paddingBottom: bottomInset + TAB_BAR_FLOATING_MARGIN, pointerEvents: 'box-none' as const },
+      ]}>
       <TabBarPillBackground>
         <View style={styles.tabsRow}>
           {TAB_ITEMS.map((tab, index) => {

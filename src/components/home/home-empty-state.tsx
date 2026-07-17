@@ -2,7 +2,7 @@ import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
+import { cardShadowSoft, FlowHubColors, QuickActionColors, Radius, Spacing } from '@/constants/theme';
 
 type HomeEmptyStateProps = {
   icon: SymbolViewProps['name'];
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: Radius.md,
-    backgroundColor: '#E0F9F8',
+    backgroundColor: QuickActionColors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

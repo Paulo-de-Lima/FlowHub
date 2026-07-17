@@ -10,21 +10,20 @@ import {
   StyleSheet,
   UIManager,
   View,
+  type ViewStyle,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
 import { RankingBarChart } from '@/components/cobrancas/RankingBarChart';
+import { FlowHubSectionHeader } from '@/components/ui/FlowHubSectionHeader';
 import { ThemedText } from '@/components/themed-text';
 import {
   cardShadow,
-  CobrancaTypography,
-  FeatureColors,
   FlowHubColors,
-  QuickActionColors,
+  FlowHubPalette,
   Radius,
-  SemanticColors,
   Spacing,
 } from '@/constants/theme';
 import type { CobrancasDashboard } from '@/services/api';
@@ -45,25 +44,25 @@ const SLIDES = [
     title: 'Maior arrecadação',
     dataKey: 'maiorArrecadacao' as const,
     formatValue: formatCurrency,
-    barColor: FlowHubColors.turquoise,
+    barColor: FlowHubPalette.chartTurquoise,
   },
   {
     key: 'despesas',
     title: 'Maiores despesas',
     dataKey: 'maioresDespesas' as const,
     formatValue: formatCurrency,
-    barColor: FeatureColors.expense,
+    barColor: FlowHubPalette.chartExpense,
   },
   {
     key: 'clientes',
     title: 'Mais clientes',
     dataKey: 'maisClientes' as const,
     formatValue: (v: number) => String(v),
-    barColor: FlowHubColors.petroleum,
+    barColor: FlowHubPalette.chartPetroleum,
   },
 ];
 
-export function CobrancaDashboard({ data, loading, defaultExpanded = false }: CobrancaDashboardProps) {
+export function CobrancaDashboard({ data, loading, defaultExpanded = true }: CobrancaDashboardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [activeIndex, setActiveIndex] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
@@ -98,21 +97,18 @@ export function CobrancaDashboard({ data, loading, defaultExpanded = false }: Co
   }));
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, cardShadow]}>
       <Pressable
         style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}
         onPress={toggleExpanded}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
-        accessibilityLabel={`Resumo do mês, ${itemCount} indicadores. ${expanded ? 'Recolher' : 'Expandir'}`}>
-        <View style={styles.headerLeft}>
-          <ThemedText style={styles.sectionTitle}>Resumo do mês</ThemedText>
-          {itemCount > 0 ? (
-            <View style={styles.countBadge}>
-              <ThemedText style={styles.countText}>{itemCount}</ThemedText>
-            </View>
-          ) : null}
-        </View>
+        accessibilityLabel={`Rankings do mês, ${itemCount} indicadores. ${expanded ? 'Recolher' : 'Expandir'}`}>
+        <FlowHubSectionHeader
+          title="Rankings do mês"
+          count={itemCount > 0 ? itemCount : undefined}
+          uppercase={false}
+        />
         <Animated.View style={chevronStyle}>
           <SymbolView
             name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
@@ -123,41 +119,71 @@ export function CobrancaDashboard({ data, loading, defaultExpanded = false }: Co
       </Pressable>
 
       {expanded ? (
-        <View style={[styles.card, cardShadow]}>
+        <View style={styles.body}>
           {loading ? (
-            <ThemedText style={styles.empty} themeColor="textSecondary">
-              Carregando rankings...
-            </ThemedText>
+            <View style={styles.emptyChart}>
+              <SymbolView
+                name={{ ios: 'chart.bar.fill', android: 'bar_chart', web: 'bar_chart' }}
+                size={28}
+                tintColor={FlowHubColors.turquoise}
+              />
+              <ThemedText style={styles.emptyText} themeColor="textSecondary">
+                Carregando rankings...
+              </ThemedText>
+            </View>
           ) : !data ? (
-            <ThemedText style={styles.empty} themeColor="textSecondary">
-              Sem dados ainda
-            </ThemedText>
+            <View style={styles.emptyChart}>
+              <SymbolView
+                name={{ ios: 'chart.bar.fill', android: 'bar_chart', web: 'bar_chart' }}
+                size={28}
+                tintColor={FlowHubColors.darkGray}
+              />
+              <ThemedText style={styles.emptyText} themeColor="textSecondary">
+                Sem dados para exibir ainda
+              </ThemedText>
+            </View>
           ) : (
             <>
               <View style={styles.carouselViewport} onLayout={onViewportLayout}>
                 {viewportWidth > 0 ? (
-                  <ScrollView
-                    ref={scrollRef}
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    onScroll={onScroll}
-                    scrollEventThrottle={16}
-                    decelerationRate="fast"
-                    snapToInterval={viewportWidth}
-                    snapToAlignment="start"
-                    disableIntervalMomentum>
-                    {SLIDES.map((slide) => (
-                      <View key={slide.key} style={[styles.slide, { width: viewportWidth }]}>
-                        <RankingBarChart
-                          title={slide.title}
-                          items={data[slide.dataKey]}
-                          formatValue={slide.formatValue}
-                          barColor={slide.barColor}
-                        />
-                      </View>
-                    ))}
-                  </ScrollView>
+                  Platform.OS === 'web' ? (
+                    <View style={[styles.webCarousel, { width: viewportWidth }]}>
+                      {SLIDES.map((slide) => (
+                        <View key={slide.key} style={[styles.slide, { width: viewportWidth }]}>
+                          <RankingBarChart
+                            title={slide.title}
+                            items={data[slide.dataKey]}
+                            formatValue={slide.formatValue}
+                            barColor={slide.barColor}
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <ScrollView
+                      ref={scrollRef}
+                      horizontal
+                      pagingEnabled
+                      nestedScrollEnabled
+                      showsHorizontalScrollIndicator={false}
+                      onScroll={onScroll}
+                      scrollEventThrottle={16}
+                      decelerationRate="fast"
+                      snapToInterval={viewportWidth}
+                      snapToAlignment="start"
+                      disableIntervalMomentum>
+                      {SLIDES.map((slide) => (
+                        <View key={slide.key} style={[styles.slide, { width: viewportWidth }]}>
+                          <RankingBarChart
+                            title={slide.title}
+                            items={data[slide.dataKey]}
+                            formatValue={slide.formatValue}
+                            barColor={slide.barColor}
+                          />
+                        </View>
+                      ))}
+                    </ScrollView>
+                  )
                 ) : null}
               </View>
 
@@ -178,38 +204,32 @@ export function CobrancaDashboard({ data, loading, defaultExpanded = false }: Co
 }
 
 const styles = StyleSheet.create({
-  wrapper: { gap: Spacing.two },
+  wrapper: {
+    backgroundColor: FlowHubColors.white,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: FlowHubPalette.borderSubtle,
+    overflow: 'hidden',
+  },
   headerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderBottomWidth: 1,
+    borderBottomColor: FlowHubPalette.sectionDivider,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  sectionTitle: {
-    ...CobrancaTypography.eyebrow,
-    color: FlowHubColors.petroleum,
-    textTransform: 'uppercase',
-  },
-  countBadge: {
-    backgroundColor: QuickActionColors.background,
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  countText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: FlowHubColors.petroleum,
-  },
-  card: {
-    backgroundColor: FlowHubColors.white,
-    borderRadius: Radius.xl,
-    paddingVertical: Spacing.four,
-    overflow: 'hidden',
+  body: {
+    paddingBottom: Spacing.three,
   },
   carouselViewport: { width: '100%', overflow: 'hidden' },
-  slide: { paddingHorizontal: Spacing.four },
+  webCarousel: {
+    flexDirection: 'row',
+    overflow: 'scroll',
+    scrollSnapType: 'x mandatory',
+  } as ViewStyle,
+  slide: { paddingHorizontal: Spacing.four, paddingTop: Spacing.three },
   dots: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -217,20 +237,28 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: SemanticColors.borderSubtle,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: FlowHubPalette.surfaceSunken,
   },
   dotActive: {
     backgroundColor: FlowHubColors.turquoise,
-    width: 18,
+    width: 22,
   },
-  empty: {
+  emptyChart: {
+    minHeight: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.four,
+    marginHorizontal: Spacing.four,
+    backgroundColor: FlowHubPalette.surfaceTint,
+    borderRadius: Radius.md,
+  },
+  emptyText: {
     fontSize: 14,
     textAlign: 'center',
-    paddingVertical: Spacing.four,
-    paddingHorizontal: Spacing.four,
   },
   pressed: { opacity: 0.88 },
 });

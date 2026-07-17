@@ -27,6 +27,7 @@ import {
   clienteDetailPath,
   parseRouteId,
 } from '@/components/clientes/route-utils';
+import { ClientesScreenBackdrop } from '@/components/clientes/ClientesScreenBackdrop';
 import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, HomeLayout, Radius, Spacing } from '@/constants/theme';
@@ -115,6 +116,7 @@ export default function ClienteMesasStandaloneScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
+      <ClientesScreenBackdrop>
       <View style={styles.screen}>
         <FlowHubToast message={s.successMessage} onDismiss={s.dismissSuccess} />
 
@@ -149,6 +151,7 @@ export default function ClienteMesasStandaloneScreen() {
           )}
         />
       </View>
+      </ClientesScreenBackdrop>
 
       <NovaMesaModal
         visible={s.mesaModalVisible}
@@ -198,7 +201,7 @@ export default function ClienteMesasStandaloneScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: FlowHubColors.lightGray },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   list: { flex: 1 },
   heroWrap: { marginTop: HomeLayout.heroOverlap, paddingHorizontal: Spacing.four, zIndex: 3 },
   heroSkeleton: {

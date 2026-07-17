@@ -1,8 +1,16 @@
 import { SymbolView } from 'expo-symbols';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { FlowHubColors, QuickActionColors, quickActionShadow, Spacing, Typography } from '@/constants/theme';
+import {
+  cardShadowSoft,
+  FlowHubColors,
+  FlowHubPalette,
+  QuickActionColors,
+  Radius,
+  Spacing,
+  Typography,
+} from '@/constants/theme';
 
 const QUICK_ACTIONS = [
   {
@@ -56,40 +64,37 @@ export function HomeQuickActions() {
       QUICK_CAROUSEL_GAP * (QUICK_VISIBLE_ITEMS - 1)) /
     QUICK_VISIBLE_ITEMS;
 
+  const items = QUICK_ACTIONS.map((action) => (
+    <Pressable
+      key={action.id}
+      style={({ pressed }) => [
+        styles.item,
+        { width: quickItemWidth },
+        pressed && styles.pressed,
+      ]}
+      onPress={() => {}}>
+      <View style={[styles.iconWrap, cardShadowSoft]}>
+        <SymbolView name={action.icon} size={24} tintColor={FlowHubColors.petroleum} />
+      </View>
+      <ThemedText style={styles.label}>{action.label}</ThemedText>
+    </Pressable>
+  ));
+
   return (
     <View style={styles.section}>
       <ThemedText style={styles.sectionTitle}>Acesso rápido</ThemedText>
-      <ScrollView
-        horizontal
-        nestedScrollEnabled
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        contentContainerStyle={styles.carousel}>
-        {QUICK_ACTIONS.map((action) => (
-          <Pressable
-            key={action.id}
-            style={({ pressed }) => [
-              styles.item,
-              { width: quickItemWidth },
-              pressed && styles.pressed,
-            ]}
-            onPress={() => {}}>
-            <View
-              style={[
-                styles.iconWrap,
-                quickActionShadow,
-                { backgroundColor: QuickActionColors.background },
-              ]}>
-              <SymbolView
-                name={action.icon}
-                size={26}
-                tintColor={QuickActionColors.icon}
-              />
-            </View>
-            <ThemedText style={styles.label}>{action.label}</ThemedText>
-          </Pressable>
-        ))}
-      </ScrollView>
+      {Platform.OS === 'web' ? (
+        <View style={styles.webCarousel}>{items}</View>
+      ) : (
+        <ScrollView
+          horizontal
+          nestedScrollEnabled
+          showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          contentContainerStyle={styles.carousel}>
+          {items}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -107,6 +112,12 @@ const styles = StyleSheet.create({
     gap: QUICK_CAROUSEL_GAP,
     alignItems: 'flex-start',
   },
+  webCarousel: {
+    flexDirection: 'row',
+    gap: QUICK_CAROUSEL_GAP,
+    alignItems: 'flex-start',
+    overflow: 'scroll',
+  },
   item: {
     alignItems: 'center',
     justifyContent: 'flex-start',
@@ -115,7 +126,10 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 58,
     height: 58,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
+    backgroundColor: QuickActionColors.background,
+    borderWidth: 1,
+    borderColor: FlowHubPalette.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },

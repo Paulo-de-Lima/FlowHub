@@ -2,8 +2,9 @@ import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-nat
 import { SymbolView } from 'expo-symbols';
 
 import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
+import { FlowHubModalHeaderStrip } from '@/components/ui/flowHubModalStyles';
 import { ThemedText } from '@/components/themed-text';
-import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
+import { cardShadowSoft, FlowHubColors, QuickActionColors, Radius, Spacing } from '@/constants/theme';
 
 type CobrancaConfirmModalProps = {
   visible: boolean;
@@ -30,6 +31,7 @@ export function CobrancaConfirmModal({
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={[styles.card, cardShadowSoft]} onPress={(e) => e.stopPropagation()}>
+          <FlowHubModalHeaderStrip />
           <View style={styles.iconWrap}>
             <SymbolView
               name={{ ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' }}
@@ -39,7 +41,7 @@ export function CobrancaConfirmModal({
           </View>
 
           <ThemedText style={styles.title}>
-            {temDivida ? 'Marcar como recebido na viagem?' : 'Marcar como cobrado?'}
+            {temDivida ? 'Marcar como cobrado na viagem?' : 'Marcar como cobrado?'}
           </ThemedText>
 
           <ThemedText style={styles.message} themeColor="textSecondary">
@@ -48,7 +50,7 @@ export function CobrancaConfirmModal({
                 Este cliente ainda tem{' '}
                 <ThemedText style={styles.highlight}>{formatCurrency(totalDeve)}</ThemedText> em
                 registros pendentes. Deseja marcar{' '}
-                <ThemedText style={styles.highlight}>{nome}</ThemedText> como recebido na viagem
+                <ThemedText style={styles.highlight}>{nome}</ThemedText> como cobrado na viagem
                 mesmo assim?
               </>
             ) : (
@@ -61,7 +63,7 @@ export function CobrancaConfirmModal({
 
           <ThemedText style={styles.hint} themeColor="textSecondary">
             {temDivida
-              ? 'Isso indica recebimento na rota, mas não quita os registros das mesas.'
+              ? 'Isso indica que você já cobrou na rota, mas não quita os registros das mesas.'
               : 'Isso não altera os registros das mesas.'}
           </ThemedText>
 
@@ -110,7 +112,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#E0F9F8',
+    backgroundColor: QuickActionColors.background,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.one,

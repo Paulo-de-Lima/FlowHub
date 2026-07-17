@@ -14,6 +14,7 @@ import {
   CobrancaTypography,
   FeatureColors,
   FlowHubColors,
+  FlowHubPalette,
   QuickActionColors,
   Radius,
   SemanticColors,
@@ -103,23 +104,25 @@ export function RegistroCard({
 
           <View style={styles.actionBtns}>
             <Pressable
-              style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.iconBtn, styles.editBtn, pressed && styles.pressed]}
               onPress={onEditar}
-              accessibilityLabel="Editar leitura">
+              accessibilityLabel="Editar leitura"
+              hitSlop={6}>
               <SymbolView
                 name={{ ios: 'pencil', android: 'edit', web: 'edit' }}
-                size={16}
+                size={18}
                 tintColor={FlowHubColors.petroleum}
               />
             </Pressable>
             <Pressable
-              style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.iconBtn, styles.deleteBtn, pressed && styles.pressed]}
               onPress={onDelete}
-              accessibilityLabel="Excluir leitura">
+              accessibilityLabel="Excluir leitura"
+              hitSlop={6}>
               <SymbolView
                 name={{ ios: 'trash', android: 'delete', web: 'delete' }}
-                size={16}
-                tintColor={FlowHubColors.darkGray}
+                size={18}
+                tintColor={FeatureColors.expense}
               />
             </Pressable>
           </View>
@@ -297,11 +300,22 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: FlowHubColors.navy,
   },
-  actionBtns: { flexDirection: 'row', gap: 4 },
+  actionBtns: { flexDirection: 'row', gap: Spacing.one },
   iconBtn: {
-    padding: 6,
-    borderRadius: Radius.md,
-    backgroundColor: FlowHubColors.lightGray,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  editBtn: {
+    backgroundColor: FlowHubPalette.surfaceSunken,
+    borderColor: FlowHubPalette.borderSubtle,
+  },
+  deleteBtn: {
+    backgroundColor: FeatureColors.expenseBg,
+    borderColor: 'rgba(239, 68, 68, 0.2)',
   },
   valoresRow: { flexDirection: 'row', gap: Spacing.one },
   valorCell: {

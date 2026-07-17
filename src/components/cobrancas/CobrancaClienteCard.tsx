@@ -14,6 +14,7 @@ import {
   CobrancaTypography,
   FeatureColors,
   FlowHubColors,
+  FlowHubPalette,
   QuickActionColors,
   Radius,
   SemanticColors,
@@ -63,12 +64,21 @@ export function CobrancaClienteCard({
 
 function getCardStyle(cobrado: boolean, totalDeve: number) {
   if (!cobrado) {
-    return { card: styles.cardPendente, deveBox: styles.deveBoxPendente };
+    return {
+      card: [styles.cardBase, styles.cardPendente],
+      deveBox: styles.deveBoxNeutral,
+    };
   }
   if (totalDeve > 0) {
-    return { card: styles.cardRecebidoComDivida, deveBox: styles.deveBoxRegistros };
+    return {
+      card: [styles.cardBase, styles.cardRecebidoComDivida],
+      deveBox: styles.deveBoxNeutral,
+    };
   }
-  return { card: styles.cardQuitado, deveBox: styles.deveBoxQuitado };
+  return {
+    card: [styles.cardBase, styles.cardQuitado],
+    deveBox: styles.deveBoxNeutral,
+  };
 }
 
 function CompactClienteCard({
@@ -90,7 +100,7 @@ function CompactClienteCard({
     : 'Valor em aberto';
 
   return (
-    <View style={[styles.card, card, cardShadowSoft]}>
+    <View style={[...(Array.isArray(card) ? card : [card]), cardShadowSoft]}>
       <View style={styles.compactHeader}>
         <View style={styles.compactTitleRow}>
           <ThemedText style={styles.compactNome} numberOfLines={1}>
@@ -103,7 +113,7 @@ function CompactClienteCard({
                   styles.badgeText,
                   totalDeve === 0 ? styles.badgeTextQuitado : styles.badgeTextRecebido,
                 ]}>
-                {totalDeve === 0 ? 'Quitado' : 'Recebido na viagem'}
+                {totalDeve === 0 ? 'Quitado' : 'Cobrado na viagem'}
                 {data_cobranca && totalDeve === 0 ? ` · ${formatDate(data_cobranca)}` : ''}
               </ThemedText>
             </View>
@@ -160,21 +170,21 @@ function CompactClienteCard({
           <Pressable
             style={({ pressed }) => [styles.secondaryBtn, styles.secondaryBtnOutline, pressed && styles.pressed]}
             onPress={onMarcarCobrado}
-            accessibilityLabel="Marcar como recebido na viagem">
+            accessibilityLabel="Marcar como cobrado na viagem">
             <SymbolView
               name={{ ios: 'checkmark', android: 'check', web: 'check' }}
               size={16}
               tintColor={SemanticColors.success}
             />
             <ThemedText style={[styles.secondaryBtnText, styles.secondaryBtnTextSuccess]}>
-              Marcar recebido
+              Marcar cobrado
             </ThemedText>
           </Pressable>
         ) : (
           <Pressable
             style={({ pressed }) => [styles.secondaryBtn, styles.secondaryBtnOutline, pressed && styles.pressed]}
             onPress={onDesfazer}
-            accessibilityLabel="Desfazer marcação de recebido">
+            accessibilityLabel="Desfazer marcação de cobrado">
             <SymbolView
               name={{ ios: 'arrow.uturn.backward', android: 'undo', web: 'undo' }}
               size={16}
@@ -226,7 +236,7 @@ function DefaultClienteCard({
   const { card, deveBox } = getCardStyle(cobrado, totalDeve);
 
   return (
-    <View style={[styles.card, card, cardShadowSoft]}>
+    <View style={[...(Array.isArray(card) ? card : [card]), cardShadowSoft]}>
       <View style={styles.header}>
         <View style={[styles.avatar, cobrado && totalDeve === 0 && styles.avatarCobrado]}>
           <ThemedText style={styles.avatarText}>{getClienteInitials(cliente.nome)}</ThemedText>
@@ -244,7 +254,7 @@ function DefaultClienteCard({
                     styles.badgeText,
                     totalDeve === 0 ? styles.badgeTextQuitado : styles.badgeTextRecebido,
                   ]}>
-                  {totalDeve === 0 ? 'Quitado' : 'Recebido na viagem'}
+                  {totalDeve === 0 ? 'Quitado' : 'Cobrado na viagem'}
                   {data_cobranca ? ` · ${formatDate(data_cobranca)}` : ''}
                 </ThemedText>
               </View>
@@ -256,7 +266,8 @@ function DefaultClienteCard({
           <Pressable
             style={({ pressed }) => [styles.actionBtn, styles.editBtn, pressed && styles.pressed]}
             onPress={onEditar}
-            accessibilityLabel="Editar cliente">
+            accessibilityLabel="Editar cliente"
+            hitSlop={6}>
             <SymbolView
               name={{ ios: 'pencil', android: 'edit', web: 'edit' }}
               size={18}
@@ -267,7 +278,8 @@ function DefaultClienteCard({
             <Pressable
               style={({ pressed }) => [styles.actionBtn, styles.okBtnOutline, pressed && styles.pressed]}
               onPress={onMarcarCobrado}
-              accessibilityLabel="Marcar como recebido na viagem">
+              accessibilityLabel="Marcar como cobrado na viagem"
+              hitSlop={6}>
               <SymbolView
                 name={{ ios: 'checkmark', android: 'check', web: 'check' }}
                 size={20}
@@ -278,11 +290,12 @@ function DefaultClienteCard({
             <Pressable
               style={({ pressed }) => [styles.actionBtn, styles.undoBtn, pressed && styles.pressed]}
               onPress={onDesfazer}
-              accessibilityLabel="Desfazer marcação de cobrado">
+              accessibilityLabel="Desfazer marcação de cobrado"
+              hitSlop={6}>
               <SymbolView
                 name={{ ios: 'xmark', android: 'close', web: 'close' }}
                 size={20}
-                tintColor={FlowHubColors.white}
+                tintColor={FeatureColors.expense}
               />
             </Pressable>
           )}
@@ -375,20 +388,28 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     gap: Spacing.two,
     backgroundColor: FlowHubColors.white,
+    borderWidth: 1,
+    borderColor: FlowHubPalette.borderSubtle,
+  },
+  cardBase: {
+    borderRadius: Radius.lg,
+    padding: Spacing.three,
+    gap: Spacing.two,
+    backgroundColor: FlowHubColors.white,
+    borderWidth: 1,
+    borderColor: FlowHubPalette.borderSubtle,
   },
   cardPendente: {
-    borderWidth: 1,
-    borderColor: SemanticColors.borderSubtle,
+    borderLeftWidth: 3,
+    borderLeftColor: SemanticColors.danger,
   },
   cardRecebidoComDivida: {
-    borderWidth: 1,
-    borderColor: SemanticColors.successBorder,
-    backgroundColor: FlowHubColors.white,
+    borderLeftWidth: 3,
+    borderLeftColor: FeatureColors.material,
   },
   cardQuitado: {
-    borderWidth: 1,
-    borderColor: SemanticColors.successBorder,
-    backgroundColor: SemanticColors.surfaceCobrado,
+    borderLeftWidth: 3,
+    borderLeftColor: SemanticColors.success,
   },
   compactHeader: { gap: 4 },
   compactTitleRow: {
@@ -439,36 +460,36 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 11, fontWeight: '700' },
   badgeTextRecebido: { color: FeatureColors.income },
   badgeTextQuitado: { color: SemanticColors.success },
-  headerActions: { flexDirection: 'row', gap: 6 },
+  headerActions: { flexDirection: 'row', gap: Spacing.one },
   actionBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
-  editBtn: { backgroundColor: FlowHubColors.lightGray },
+  editBtn: {
+    backgroundColor: FlowHubPalette.surfaceSunken,
+    borderColor: FlowHubPalette.borderSubtle,
+  },
   okBtnOutline: {
-    backgroundColor: FlowHubColors.white,
+    backgroundColor: FeatureColors.incomeBg,
     borderWidth: 1.5,
-    borderColor: SemanticColors.success,
+    borderColor: FeatureColors.income,
   },
-  undoBtn: { backgroundColor: SemanticColors.danger },
+  undoBtn: {
+    backgroundColor: FeatureColors.expenseBg,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+  },
   deveBox: {
     borderRadius: Radius.md,
     padding: Spacing.three,
     gap: 4,
+    backgroundColor: FlowHubPalette.surfaceSunken,
   },
-  deveBoxPendente: { backgroundColor: SemanticColors.dangerBg },
-  deveBoxRegistros: {
-    backgroundColor: SemanticColors.warningBg,
-    borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.25)',
-  },
-  deveBoxQuitado: {
-    backgroundColor: 'rgba(255,255,255,0.65)',
-    borderWidth: 1,
-    borderColor: '#D1FAE5',
+  deveBoxNeutral: {
+    backgroundColor: FlowHubPalette.surfaceSunken,
   },
   deveLabel: {
     ...CobrancaTypography.label,
@@ -493,14 +514,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.two,
-    backgroundColor: FlowHubColors.turquoise,
+    backgroundColor: FlowHubColors.navy,
     borderRadius: Radius.md,
     paddingVertical: 14,
   },
   ctaPrimaryText: {
     fontSize: 15,
     fontWeight: '700',
-    color: FlowHubColors.navy,
+    color: FlowHubColors.white,
   },
   secondaryActions: {
     flexDirection: 'row',
@@ -598,5 +619,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: FlowHubColors.darkGray,
   },
-  pressed: { opacity: 0.88 },
+  pressed: { opacity: 0.88, transform: [{ scale: 0.98 }] },
 });

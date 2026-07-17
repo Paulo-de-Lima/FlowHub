@@ -3,7 +3,15 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatCurrency } from '@/components/home/home-utils';
 import { ThemedText } from '@/components/themed-text';
-import { cardShadow, FeatureColors, FlowHubColors, Radius, Spacing, Typography } from '@/constants/theme';
+import {
+  cardShadow,
+  ClientesTypography,
+  FeatureColors,
+  FlowHubColors,
+  FlowHubPalette,
+  Radius,
+  Spacing,
+} from '@/constants/theme';
 
 type HomeHeroCardProps = {
   profit: number;
@@ -37,12 +45,16 @@ export function HomeHeroCard({
       <View style={styles.metricsRow}>
         <View style={styles.metric}>
           <ThemedText style={styles.metricLabel}>Receita</ThemedText>
-          <ThemedText style={styles.metricValueIncome}>{formatCurrency(revenue)}</ThemedText>
+          <ThemedText style={[styles.metricValue, { color: FlowHubColors.petroleum }]}>
+            {formatCurrency(revenue)}
+          </ThemedText>
         </View>
         <View style={styles.metricDivider} />
         <View style={styles.metric}>
           <ThemedText style={styles.metricLabel}>Despesas</ThemedText>
-          <ThemedText style={styles.metricValueExpense}>{formatCurrency(expenses)}</ThemedText>
+          <ThemedText style={[styles.metricValue, { color: FeatureColors.expense }]}>
+            {formatCurrency(expenses)}
+          </ThemedText>
         </View>
       </View>
 
@@ -65,7 +77,7 @@ const styles = StyleSheet.create({
     backgroundColor: FlowHubColors.white,
     borderRadius: Radius.xl,
     padding: Spacing.four,
-    gap: Spacing.two,
+    gap: Spacing.one,
   },
   header: {
     flexDirection: 'row',
@@ -73,9 +85,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   eyebrow: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: FlowHubColors.navy,
+    ...ClientesTypography.sectionEyebrow,
+    color: FlowHubColors.petroleum,
   },
   monthHint: {
     fontSize: 13,
@@ -83,62 +94,43 @@ const styles = StyleSheet.create({
     color: FlowHubColors.darkGray,
   },
   profitValue: {
-    ...Typography.heroValue,
+    ...ClientesTypography.heroValue,
     color: FlowHubColors.navy,
     marginTop: Spacing.one,
   },
   profitLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '500',
     color: FlowHubColors.darkGray,
-    marginBottom: Spacing.one,
+    marginBottom: Spacing.two,
   },
   metricsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: FlowHubColors.lightGray,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.two,
+    paddingTop: Spacing.two,
+    borderTopWidth: 1,
+    borderTopColor: FlowHubPalette.borderSubtle,
   },
-  metric: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
+  metric: { flex: 1, gap: 4, alignItems: 'center' },
   metricDivider: {
     width: 1,
-    height: 32,
-    backgroundColor: 'rgba(57, 74, 90, 0.15)',
+    height: 36,
+    backgroundColor: FlowHubPalette.borderSubtle,
+    marginHorizontal: Spacing.two,
   },
-  metricLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: FlowHubColors.darkGray,
-  },
-  metricValueIncome: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: FlowHubColors.petroleum,
-  },
-  metricValueExpense: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: FeatureColors.expense,
-  },
+  metricLabel: { ...ClientesTypography.kpiLabel, color: FlowHubColors.darkGray },
+  metricValue: { ...ClientesTypography.kpiValue },
   linkRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.one,
-    paddingTop: Spacing.one,
+    paddingTop: Spacing.two,
   },
   linkText: {
     fontSize: 14,
     fontWeight: '700',
     color: FlowHubColors.turquoise,
   },
-  pressed: {
-    opacity: 0.85,
-  },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
 });

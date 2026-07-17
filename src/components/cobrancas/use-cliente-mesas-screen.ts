@@ -302,10 +302,10 @@ export function useClienteMesasScreen(
       await toggleClienteCobrado(cobrancaId, clienteIdNum, true);
       setConfirmCobradoVisible(false);
       setClienteCobrado(true);
-      showSuccess('Cliente marcado como recebido na viagem.');
+      showSuccess('Cliente marcado como cobrado na viagem.');
     } catch (err) {
       setConfirmCobradoError(
-        err instanceof Error ? err.message : 'Erro ao marcar recebido na viagem.',
+        err instanceof Error ? err.message : 'Erro ao marcar cobrado na viagem.',
       );
     } finally {
       setMarcandoCobrado(false);

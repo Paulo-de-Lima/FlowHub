@@ -1,16 +1,18 @@
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import {
   formatCurrency,
   formatTelefone,
   getClienteInitials,
 } from '@/components/cobrancas/cobrancas-utils';
+import { FlowHubStatusBadge } from '@/components/ui/FlowHubStatusBadge';
 import { ThemedText } from '@/components/themed-text';
 import {
   cardShadowSoft,
-  FeatureColors,
   FlowHubColors,
+  FlowHubPalette,
   QuickActionColors,
   Radius,
   SemanticColors,
@@ -18,21 +20,42 @@ import {
 } from '@/constants/theme';
 import type { ClienteSummary } from '@/services/api';
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 type ClienteListCardProps = {
   item: ClienteSummary;
   onPress: () => void;
 };
 
+function StatusBadge({ item }: { item: ClienteSummary }) {
+  if (item.totalDeve > 0) {
+    return <FlowHubStatusBadge variant="debt" label={formatCurrency(item.totalDeve)} />;
+  }
+  if (item.qtdMesas > 0) {
+    return <FlowHubStatusBadge variant="ok" label="Em dia" />;
+  }
+  return <FlowHubStatusBadge variant="neutral" label="Sem mesa" />;
+}
+
 export function ClienteListCard({ item, onPress }: ClienteListCardProps) {
   const nome = item.nome?.trim() || 'Sem nome';
   const mesasLabel = item.qtdMesas === 1 ? '1 mesa' : `${item.qtdMesas} mesas`;
-  const deveLabel =
-    item.totalDeve > 0 ? formatCurrency(item.totalDeve) : item.qtdMesas > 0 ? 'Em dia' : 'Sem mesa';
+  const scale = useSharedValue(1);
+
+  const pressStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   return (
-    <Pressable
-      style={({ pressed }) => [styles.card, cardShadowSoft, pressed && styles.pressed]}
+    <AnimatedPressable
+      style={[styles.card, cardShadowSoft, pressStyle]}
       onPress={onPress}
+      onPressIn={() => {
+        scale.value = withTiming(0.98, { duration: 100 });
+      }}
+      onPressOut={() => {
+        scale.value = withTiming(1, { duration: 100 });
+      }}
       accessibilityLabel={`Abrir ${nome}`}>
       <View style={styles.avatar}>
         <ThemedText style={styles.avatarText}>{getClienteInitials(item.nome)}</ThemedText>
@@ -43,17 +66,10 @@ export function ClienteListCard({ item, onPress }: ClienteListCardProps) {
           {nome}
         </ThemedText>
         <ThemedText style={styles.telefone}>{formatTelefone(item.numero)}</ThemedText>
-        <ThemedText style={styles.meta}>
-          {mesasLabel} ·{' '}
-          <ThemedText
-            style={[
-              styles.deve,
-              item.totalDeve > 0 && styles.devePendente,
-              item.qtdMesas > 0 && item.totalDeve === 0 && styles.deveOk,
-            ]}>
-            {deveLabel}
-          </ThemedText>
-        </ThemedText>
+        <View style={styles.metaRow}>
+          <ThemedText style={styles.meta}>{mesasLabel}</ThemedText>
+          <StatusBadge item={item} />
+        </View>
       </View>
 
       <SymbolView
@@ -61,7 +77,7 @@ export function ClienteListCard({ item, onPress }: ClienteListCardProps) {
         size={16}
         tintColor={FlowHubColors.darkGray}
       />
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -85,12 +101,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: { fontSize: 15, fontWeight: '800', color: FlowHubColors.petroleum },
-  info: { flex: 1, gap: 2, minWidth: 0 },
+  info: { flex: 1, gap: 4, minWidth: 0 },
   nome: { fontSize: 16, fontWeight: '700', color: FlowHubColors.navy },
   telefone: { fontSize: 13, color: FlowHubColors.darkGray },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, flexWrap: 'wrap' },
   meta: { fontSize: 12, fontWeight: '500', color: FlowHubColors.darkGray },
-  deve: { fontWeight: '700' },
-  devePendente: { color: FeatureColors.expense },
-  deveOk: { color: FeatureColors.income },
-  pressed: { opacity: 0.88 },
 });

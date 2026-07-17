@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import { FlowHubModalHeaderStrip } from '@/components/ui/flowHubModalStyles';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
 
@@ -61,6 +62,7 @@ export function CobrancaEditClienteModal({
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={[styles.card, cardShadowSoft]}>
+          <FlowHubModalHeaderStrip />
           <ThemedText style={styles.title}>Editar cliente</ThemedText>
 
           <ScrollView

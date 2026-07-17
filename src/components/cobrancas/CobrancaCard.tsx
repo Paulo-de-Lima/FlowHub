@@ -1,716 +1,279 @@
-import { LinearGradient } from 'expo-linear-gradient';
-
 import { SymbolView } from 'expo-symbols';
-
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
-
-
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
-
   formatCobrancaTitulo,
-
   formatCurrency,
-
   formatIntervaloDias,
-
   formatProximaViagem,
-
   formatRepeticaoPrevista,
-
 } from '@/components/cobrancas/cobrancas-utils';
-
 import { ThemedText } from '@/components/themed-text';
-
-import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
-
+import {
+  cardShadowSoft,
+  FeatureColors,
+  FlowHubColors,
+  FlowHubPalette,
+  QuickActionColors,
+  Radius,
+  Spacing,
+} from '@/constants/theme';
 import type { Cobranca } from '@/services/api';
 
-
-
 type CobrancaCardProps = {
-
   cobranca: Cobranca;
-
   destacada?: boolean;
-
   onIniciar: () => void;
-
   onEdit: () => void;
-
   onDelete: () => void;
-
 };
 
-
-
 export function CobrancaCard({
-
   cobranca,
-
   destacada,
-
   onIniciar,
-
   onEdit,
-
   onDelete,
-
 }: CobrancaCardProps) {
-
   const titulo = formatCobrancaTitulo(cobranca.nome);
-
   const progressPct =
-
     cobranca.totalClientes > 0 ? cobranca.clientesCobrados / cobranca.totalClientes : 0;
 
-
-
-  const content = (
-
-    <>
-
+  return (
+    <View
+      style={[
+        styles.card,
+        cardShadowSoft,
+        destacada && styles.cardDestacada,
+      ]}>
       <View style={styles.header}>
-
         <View style={styles.titleRow}>
-
-          <SymbolView
-
-            name={{ ios: 'map.fill', android: 'map', web: 'map' }}
-
-            size={18}
-
-            tintColor={destacada ? FlowHubColors.turquoise : FlowHubColors.petroleum}
-
-          />
-
-          <ThemedText style={[styles.title, destacada && styles.titleHighlight]} numberOfLines={1}>
-
-            {titulo}
-
-          </ThemedText>
-
+          <View style={styles.avatar}>
+            <ThemedText style={styles.avatarText}>{titulo.charAt(0).toUpperCase()}</ThemedText>
+          </View>
+          <View style={styles.titleBlock}>
+            <ThemedText style={styles.title} numberOfLines={1}>
+              {titulo}
+            </ThemedText>
+            <ThemedText style={styles.metaLine} numberOfLines={1}>
+              {formatIntervaloDias(cobranca.intervalo_dias)} ·{' '}
+              {formatProximaViagem(cobranca.proximaViagem, cobranca.data_viagem)}
+            </ThemedText>
+          </View>
         </View>
-
         <View style={styles.headerActions}>
-
           {destacada ? (
-
             <View style={styles.badge}>
-
               <ThemedText style={styles.badgeText}>Próxima</ThemedText>
-
             </View>
-
           ) : null}
-
           <Pressable
-
-            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
-
+            style={({ pressed }) => [styles.iconBtn, styles.editBtn, pressed && styles.pressed]}
             onPress={onEdit}
-
-            accessibilityLabel="Editar cobrança">
-
+            accessibilityLabel="Editar cobrança"
+            hitSlop={6}>
             <SymbolView
-
               name={{ ios: 'pencil', android: 'edit', web: 'edit' }}
-
-              size={16}
-
-              tintColor={destacada ? FlowHubColors.white : FlowHubColors.petroleum}
-
+              size={18}
+              tintColor={FlowHubColors.petroleum}
             />
-
           </Pressable>
-
           <Pressable
-
-            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
-
+            style={({ pressed }) => [styles.iconBtn, styles.deleteBtn, pressed && styles.pressed]}
             onPress={onDelete}
-
-            accessibilityLabel="Excluir cobrança">
-
+            accessibilityLabel="Excluir cobrança"
+            hitSlop={6}>
             <SymbolView
-
               name={{ ios: 'trash', android: 'delete', web: 'delete' }}
-
-              size={16}
-
-              tintColor={destacada ? '#FFB4B4' : '#C0392B'}
-
+              size={18}
+              tintColor={FeatureColors.expense}
             />
-
           </Pressable>
-
         </View>
-
       </View>
 
-
-
-      <View style={styles.metaGrid}>
-
-        <View style={[styles.metaCell, destacada && styles.metaCellHighlight]}>
-
-          <ThemedText style={[styles.metaLabel, destacada && styles.metaHighlight]}>
-
-            Clientes
-
-          </ThemedText>
-
-          <ThemedText style={[styles.metaValue, destacada && styles.titleHighlight]}>
-
-            {cobranca.totalClientes}
-
-          </ThemedText>
-
+      <View style={styles.statsRow}>
+        <View style={styles.stat}>
+          <ThemedText style={styles.statLabel}>Clientes</ThemedText>
+          <ThemedText style={styles.statValue}>{cobranca.totalClientes}</ThemedText>
         </View>
-
-        <View style={[styles.metaCell, destacada && styles.metaCellHighlight]}>
-
-          <ThemedText style={[styles.metaLabel, destacada && styles.metaHighlight]}>
-
-            Próxima viagem
-
+        <View style={styles.statDivider} />
+        <View style={styles.stat}>
+          <ThemedText style={styles.statLabel}>Arrecadado</ThemedText>
+          <ThemedText style={[styles.statValue, styles.statValuePetroleum]}>
+            {formatCurrency(cobranca.totalArrecadadoAnterior)}
           </ThemedText>
-
-          <ThemedText style={[styles.metaValue, destacada && styles.titleHighlight]}>
-
-            {formatProximaViagem(cobranca.proximaViagem, cobranca.data_viagem)}
-
-          </ThemedText>
-
         </View>
-
-      </View>
-
-
-
-      <View style={styles.intervaloRow}>
-
-        <ThemedText style={[styles.intervaloLabel, destacada && styles.metaHighlight]}>
-
-          {formatIntervaloDias(cobranca.intervalo_dias)}
-
-        </ThemedText>
-
-        <ThemedText style={[styles.repeticaoLabel, destacada && styles.metaHighlight]}>
-
-          Repetição: {formatRepeticaoPrevista(cobranca.data_viagem, cobranca.intervalo_dias)}
-
-        </ThemedText>
-
-      </View>
-
-
-
-      <View style={styles.arrecadadoRow}>
-
-        <ThemedText style={[styles.arrecadadoLabel, destacada && styles.metaHighlight]}>
-
-          Arrecadado anteriormente
-
-        </ThemedText>
-
-        <ThemedText style={[styles.arrecadadoValue, destacada && styles.arrecadadoHighlight]}>
-
-          {formatCurrency(cobranca.totalArrecadadoAnterior)}
-
-        </ThemedText>
-
-      </View>
-
-
-
-      <View style={styles.progressSection}>
-
-        <View style={styles.progressHeader}>
-
-          <ThemedText style={[styles.progressLabel, destacada && styles.metaHighlight]}>
-
-            Progresso
-
-          </ThemedText>
-
-          <ThemedText style={[styles.progressCount, destacada && styles.titleHighlight]}>
-
+        <View style={styles.statDivider} />
+        <View style={styles.stat}>
+          <ThemedText style={styles.statLabel}>Progresso</ThemedText>
+          <ThemedText style={[styles.statValue, styles.statValueTurquoise]}>
             {cobranca.clientesCobrados}/{cobranca.totalClientes}
-
           </ThemedText>
-
         </View>
-
-        <View style={[styles.progressTrack, destacada && styles.progressTrackHighlight]}>
-
-          <View
-
-            style={[
-
-              styles.progressFill,
-
-              destacada && styles.progressFillHighlight,
-
-              { width: `${progressPct * 100}%` },
-
-            ]}
-
-          />
-
-        </View>
-
       </View>
 
+      <ThemedText style={styles.repeticaoHint}>
+        Retorno previsto: {formatRepeticaoPrevista(cobranca.data_viagem, cobranca.intervalo_dias)}
+      </ThemedText>
 
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${progressPct * 100}%` }]} />
+      </View>
 
       <Pressable
-
-        style={({ pressed }) => [
-
-          styles.iniciarBtn,
-
-          destacada && styles.iniciarBtnHighlight,
-
-          pressed && styles.pressed,
-
-        ]}
-
+        style={({ pressed }) => [styles.iniciarBtn, pressed && styles.pressed]}
         onPress={onIniciar}>
-
-        <ThemedText style={[styles.iniciarText, destacada && styles.iniciarTextHighlight]}>
-
-          Iniciar
-
-        </ThemedText>
-
+        <ThemedText style={styles.iniciarText}>Iniciar</ThemedText>
         <SymbolView
-
           name={{ ios: 'play.fill', android: 'play_arrow', web: 'play_arrow' }}
-
           size={16}
-
-          tintColor={destacada ? FlowHubColors.navy : FlowHubColors.white}
-
+          tintColor={FlowHubColors.white}
         />
-
       </Pressable>
-
-    </>
-
+    </View>
   );
-
-
-
-  if (destacada) {
-
-    return (
-
-      <LinearGradient
-
-        colors={[FlowHubColors.navy, FlowHubColors.petroleum]}
-
-        start={{ x: 0, y: 0 }}
-
-        end={{ x: 1, y: 1 }}
-
-        style={[styles.card, styles.cardHighlight, cardShadowSoft, styles.glowBorder]}>
-
-        {content}
-
-      </LinearGradient>
-
-    );
-
-  }
-
-
-
-  return <View style={[styles.card, cardShadowSoft, styles.cardNormal]}>{content}</View>;
-
 }
 
-
-
 const styles = StyleSheet.create({
-
   card: {
-
-    borderRadius: Radius.lg,
-
-    padding: Spacing.three,
-
-    gap: Spacing.two,
-
-  },
-
-  cardNormal: {
-
     backgroundColor: FlowHubColors.white,
-
+    borderRadius: Radius.lg,
+    padding: Spacing.three,
+    gap: Spacing.two,
     borderWidth: 1,
-
-    borderColor: '#E8EDF2',
-
+    borderColor: FlowHubPalette.borderSubtle,
   },
-
-  cardHighlight: {
-
-    backgroundColor: 'transparent',
-
-  },
-
-  glowBorder: {
-
-    borderWidth: 1.5,
-
+  cardDestacada: {
+    borderWidth: 2,
     borderColor: FlowHubColors.turquoise,
-
-    ...Platform.select({
-
-      web: {
-
-        boxShadow: '0 4px 20px rgba(20, 200, 196, 0.25)',
-
-      },
-
-      default: {
-
-        shadowColor: FlowHubColors.turquoise,
-
-        shadowOffset: { width: 0, height: 4 },
-
-        shadowOpacity: 0.25,
-
-        shadowRadius: 12,
-
-        elevation: 6,
-
-      },
-
-    }),
-
   },
-
   header: {
-
     flexDirection: 'row',
-
-    alignItems: 'center',
-
-    justifyContent: 'space-between',
-
-    gap: Spacing.two,
-
-  },
-
-  titleRow: {
-
-    flex: 1,
-
-    flexDirection: 'row',
-
-    alignItems: 'center',
-
-    gap: Spacing.one,
-
-  },
-
-  headerActions: {
-
-    flexDirection: 'row',
-
-    alignItems: 'center',
-
-    gap: 4,
-
-  },
-
-  iconBtn: {
-
-    width: 32,
-
-    height: 32,
-
-    borderRadius: 8,
-
-    alignItems: 'center',
-
-    justifyContent: 'center',
-
-  },
-
-  title: {
-
-    flex: 1,
-
-    fontSize: 16,
-
-    fontWeight: '700',
-
-    color: FlowHubColors.navy,
-
-  },
-
-  titleHighlight: { color: FlowHubColors.white },
-
-  badge: {
-
-    backgroundColor: FlowHubColors.turquoise,
-
-    borderRadius: 8,
-
-    paddingHorizontal: 8,
-
-    paddingVertical: 3,
-
-    marginRight: 2,
-
-  },
-
-  badgeText: {
-
-    fontSize: 11,
-
-    fontWeight: '700',
-
-    color: FlowHubColors.navy,
-
-  },
-
-  metaGrid: {
-
-    flexDirection: 'row',
-
-    gap: Spacing.two,
-
-  },
-
-  metaCell: {
-
-    flex: 1,
-
-    backgroundColor: FlowHubColors.lightGray,
-
-    borderRadius: Radius.md,
-
-    padding: Spacing.two,
-
-    gap: 2,
-
-  },
-
-  metaCellHighlight: {
-
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-
-  },
-
-  metaLabel: {
-
-    fontSize: 11,
-
-    fontWeight: '600',
-
-    color: FlowHubColors.darkGray,
-
-    textTransform: 'uppercase',
-
-    letterSpacing: 0.3,
-
-  },
-
-  metaValue: {
-
-    fontSize: 14,
-
-    fontWeight: '700',
-
-    color: FlowHubColors.navy,
-
-  },
-
-  metaHighlight: { color: 'rgba(255,255,255,0.65)' },
-
-  intervaloRow: {
-
     alignItems: 'flex-start',
-
-    gap: 2,
-
-  },
-
-  intervaloLabel: {
-
-    fontSize: 12,
-
-    fontWeight: '600',
-
-    color: FlowHubColors.petroleum,
-
-  },
-
-  repeticaoLabel: {
-
-    fontSize: 11,
-
-    fontWeight: '500',
-
-    color: FlowHubColors.darkGray,
-
-  },
-
-  arrecadadoRow: {
-
-    flexDirection: 'row',
-
     justifyContent: 'space-between',
-
-    alignItems: 'center',
-
+    gap: Spacing.two,
   },
-
-  arrecadadoLabel: {
-
-    fontSize: 13,
-
-    color: FlowHubColors.darkGray,
-
-  },
-
-  arrecadadoValue: {
-
-    fontSize: 16,
-
-    fontWeight: '700',
-
-    color: FlowHubColors.petroleum,
-
-  },
-
-  arrecadadoHighlight: {
-
-    color: FlowHubColors.turquoise,
-
-  },
-
-  progressSection: {
-
-    gap: Spacing.one,
-
-  },
-
-  progressHeader: {
-
+  titleRow: {
+    flex: 1,
     flexDirection: 'row',
-
-    justifyContent: 'space-between',
-
     alignItems: 'center',
-
+    gap: Spacing.two,
   },
-
-  progressLabel: {
-
-    fontSize: 12,
-
-    fontWeight: '600',
-
-    color: FlowHubColors.darkGray,
-
-  },
-
-  progressCount: {
-
-    fontSize: 12,
-
-    fontWeight: '700',
-
-    color: FlowHubColors.petroleum,
-
-  },
-
-  progressTrack: {
-
-    height: 6,
-
-    backgroundColor: '#E2E8EE',
-
-    borderRadius: 3,
-
-    overflow: 'hidden',
-
-  },
-
-  progressTrackHighlight: {
-
-    backgroundColor: 'rgba(255,255,255,0.2)',
-
-  },
-
-  progressFill: {
-
-    height: '100%',
-
-    backgroundColor: FlowHubColors.turquoise,
-
-    borderRadius: 3,
-
-  },
-
-  progressFillHighlight: {
-
-    backgroundColor: FlowHubColors.turquoise,
-
-  },
-
-  iniciarBtn: {
-
-    flexDirection: 'row',
-
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: QuickActionColors.background,
     alignItems: 'center',
-
     justifyContent: 'center',
-
-    gap: Spacing.one,
-
-    backgroundColor: FlowHubColors.navy,
-
-    borderRadius: Radius.md,
-
-    paddingVertical: 13,
-
   },
-
-  iniciarBtnHighlight: {
-
-    backgroundColor: FlowHubColors.turquoise,
-
+  avatarText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: FlowHubColors.petroleum,
   },
-
-  iniciarText: {
-
-    color: FlowHubColors.white,
-
+  titleBlock: { flex: 1, gap: 2 },
+  title: {
+    fontSize: 16,
     fontWeight: '700',
-
-    fontSize: 15,
-
-  },
-
-  iniciarTextHighlight: {
-
     color: FlowHubColors.navy,
-
   },
-
+  metaLine: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: FlowHubColors.darkGray,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  editBtn: {
+    backgroundColor: FlowHubPalette.surfaceSunken,
+    borderColor: FlowHubPalette.borderSubtle,
+  },
+  deleteBtn: {
+    backgroundColor: FeatureColors.expenseBg,
+    borderColor: 'rgba(239, 68, 68, 0.2)',
+  },
+  badge: {
+    backgroundColor: QuickActionColors.background,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginRight: 2,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: FlowHubColors.petroleum,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: Spacing.one,
+    borderTopWidth: 1,
+    borderTopColor: FlowHubPalette.borderSubtle,
+  },
+  stat: { flex: 1, gap: 2, alignItems: 'center' },
+  statDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: FlowHubPalette.borderSubtle,
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: FlowHubColors.darkGray,
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: FlowHubColors.navy,
+  },
+  statValuePetroleum: { color: FlowHubColors.petroleum },
+  statValueTurquoise: { color: FlowHubColors.turquoise },
+  repeticaoHint: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: FlowHubColors.darkGray,
+  },
+  progressTrack: {
+    height: 5,
+    backgroundColor: FlowHubPalette.surfaceSunken,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: FlowHubColors.turquoise,
+    borderRadius: 3,
+  },
+  iniciarBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    backgroundColor: FlowHubColors.navy,
+    borderRadius: Radius.md,
+    paddingVertical: 13,
+  },
+  iniciarText: {
+    color: FlowHubColors.white,
+    fontWeight: '700',
+    fontSize: 15,
+  },
   pressed: {
-
     opacity: 0.88,
-
-    transform: [{ scale: 0.99 }],
-
+    transform: [{ scale: 0.98 }],
   },
-
 });
-

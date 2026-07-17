@@ -24,6 +24,7 @@ import {
 
 
 
+import { FlowHubModalHeaderStrip } from '@/components/ui/flowHubModalStyles';
 import { ThemedText } from '@/components/themed-text';
 
 import { cardShadowSoft, CobrancaTypography, FlowHubColors, modalWebCard, Radius, Spacing } from '@/constants/theme';
@@ -149,11 +150,10 @@ export function CobrancaFormModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
 
         <View style={[styles.card, cardShadowSoft]}>
+          <FlowHubModalHeaderStrip />
 
           <ThemedText style={styles.title}>
-
             {isEditing ? 'Editar cobrança' : 'Nova cobrança'}
-
           </ThemedText>
 
 

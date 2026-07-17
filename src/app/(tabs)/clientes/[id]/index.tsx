@@ -8,15 +8,17 @@ import {
   View,
 } from 'react-native';
 import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 
 import { CobrancaBreadcrumb } from '@/components/cobrancas/CobrancaBreadcrumb';
 import { ConfirmDeleteModal } from '@/components/cobrancas/ConfirmDeleteModal';
 import { FlowHubToast } from '@/components/cobrancas/FlowHubToast';
 import { formatTelefone } from '@/components/cobrancas/cobrancas-utils';
 import { ClienteDetailHeroCard } from '@/components/clientes/ClienteDetailHeroCard';
+import { FlowHubNavButton } from '@/components/ui/FlowHubAddButton';
 import { ClienteFormModal } from '@/components/clientes/ClienteFormModal';
 import { ClientesHeader } from '@/components/clientes/ClientesHeader';
+import { ClientesScreenBackdrop } from '@/components/clientes/ClientesScreenBackdrop';
 import {
   CLIENTES_LIST_PATH,
   clienteMesasPath,
@@ -28,9 +30,9 @@ import { ThemedText } from '@/components/themed-text';
 import {
   cardShadowSoft,
   FlowHubColors,
+  FlowHubPalette,
   HomeLayout,
   Radius,
-  SemanticColors,
   Spacing,
 } from '@/constants/theme';
 import { deleteCliente, updateCliente, type UpdateClienteInput } from '@/services/api';
@@ -127,6 +129,7 @@ export default function ClienteDetailScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
 
+      <ClientesScreenBackdrop>
       <View style={styles.screen}>
         <FlowHubToast message={s.successMessage} onDismiss={s.dismissSuccess} />
 
@@ -166,9 +169,21 @@ export default function ClienteDetailScreen() {
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>Dados cadastrais</ThemedText>
             <View style={[styles.card, cardShadowSoft]}>
-              <DataRow label="CPF" value={s.clienteBase?.cpf || '—'} />
-              <DataRow label="Telefone" value={formatTelefone(s.clienteBase?.numero)} />
-              <DataRow label="Endereço" value={s.clienteBase?.endereco || '—'} />
+              <DataRow
+                label="CPF"
+                value={s.clienteBase?.cpf || '—'}
+                icon={{ ios: 'person.text.rectangle', android: 'badge', web: 'badge' }}
+              />
+              <DataRow
+                label="Telefone"
+                value={formatTelefone(s.clienteBase?.numero)}
+                icon={{ ios: 'phone.fill', android: 'phone', web: 'phone' }}
+              />
+              <DataRow
+                label="Endereço"
+                value={s.clienteBase?.endereco || '—'}
+                icon={{ ios: 'mappin.and.ellipse', android: 'location_on', web: 'location_on' }}
+              />
 
               <Pressable
                 style={styles.editBtn}
@@ -186,20 +201,16 @@ export default function ClienteDetailScreen() {
             </View>
           </View>
 
-          <Pressable
-            style={styles.cta}
+          <FlowHubNavButton
+            label="Gerenciar mesas e leituras"
             onPress={() => {
               if (s.clienteId != null) router.push(clienteMesasPath(s.clienteId));
-            }}>
-            <ThemedText style={styles.ctaText}>Gerenciar mesas e leituras</ThemedText>
-            <SymbolView
-              name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-              size={18}
-              tintColor={FlowHubColors.white}
-            />
-          </Pressable>
+            }}
+            style={styles.cta}
+          />
         </ScrollView>
       </View>
+      </ClientesScreenBackdrop>
 
       <ClienteFormModal
         visible={formVisible}
@@ -245,17 +256,28 @@ export default function ClienteDetailScreen() {
   );
 }
 
-function DataRow({ label, value }: { label: string; value: string }) {
+function DataRow({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: SymbolViewProps['name'];
+}) {
   return (
     <View style={styles.dataRow}>
-      <ThemedText style={styles.dataLabel}>{label}</ThemedText>
-      <ThemedText style={styles.dataValue}>{value}</ThemedText>
+      <SymbolView name={icon} size={16} tintColor={FlowHubColors.petroleum} />
+      <View style={styles.dataContent}>
+        <ThemedText style={styles.dataLabel}>{label}</ThemedText>
+        <ThemedText style={styles.dataValue}>{value}</ThemedText>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: FlowHubColors.lightGray },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   scrollContent: {},
   center: {
     flex: 1,
@@ -279,9 +301,10 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     gap: Spacing.three,
     borderWidth: 1,
-    borderColor: SemanticColors.borderSubtle,
+    borderColor: FlowHubPalette.borderSubtle,
   },
-  dataRow: { gap: 4 },
+  dataRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
+  dataContent: { flex: 1, gap: 4 },
   dataLabel: { fontSize: 12, fontWeight: '600', color: FlowHubColors.darkGray },
   dataValue: { fontSize: 15, fontWeight: '600', color: FlowHubColors.navy },
   editBtn: {
@@ -290,20 +313,10 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     alignSelf: 'flex-start',
     paddingVertical: Spacing.one,
+    minHeight: 44,
   },
   editBtnText: { fontSize: 14, fontWeight: '700', color: FlowHubColors.petroleum },
-  cta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: Spacing.four,
-    marginTop: Spacing.four,
-    backgroundColor: FlowHubColors.turquoise,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: 16,
-  },
-  ctaText: { fontSize: 15, fontWeight: '700', color: FlowHubColors.navy },
+  cta: { marginTop: Spacing.four, marginHorizontal: Spacing.four },
   errorText: { color: FlowHubColors.petroleum, textAlign: 'center', paddingHorizontal: Spacing.four },
   retryBtn: {
     backgroundColor: FlowHubColors.turquoise,

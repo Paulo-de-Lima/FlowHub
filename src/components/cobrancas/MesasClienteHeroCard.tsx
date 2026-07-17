@@ -1,8 +1,17 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatCurrency } from '@/components/cobrancas/cobrancas-utils';
+import { FlowHubAddButton } from '@/components/ui/FlowHubAddButton';
 import { ThemedText } from '@/components/themed-text';
-import { cardShadow, FeatureColors, FlowHubColors, Radius, Spacing, Typography } from '@/constants/theme';
+import {
+  cardShadow,
+  ClientesTypography,
+  FeatureColors,
+  FlowHubColors,
+  FlowHubPalette,
+  Radius,
+  Spacing,
+} from '@/constants/theme';
 
 type MesasClienteHeroCardProps = {
   totalDeve: number;
@@ -37,14 +46,22 @@ export function MesasClienteHeroCard({
   return (
     <View style={[styles.container, cardShadow]}>
       <ThemedText style={styles.eyebrow}>Dívida em aberto</ThemedText>
-      <ThemedText style={styles.heroValue}>{formatCurrency(totalDeve)}</ThemedText>
+      <ThemedText style={[styles.heroValue, totalDeve > 0 && styles.heroValueExpense]}>
+        {formatCurrency(totalDeve)}
+      </ThemedText>
 
       <View style={styles.metricsRow}>
-        <ThemedText style={styles.metricText}>
-          Já pago: <ThemedText style={styles.metricValue}>{formatCurrency(totalPago)}</ThemedText>
-        </ThemedText>
-        <ThemedText style={styles.metricDot}>·</ThemedText>
-        <ThemedText style={styles.metricText}>{mesasLabel}</ThemedText>
+        <View style={styles.metric}>
+          <ThemedText style={styles.metricLabel}>Já pago</ThemedText>
+          <ThemedText style={[styles.metricValue, { color: FeatureColors.income }]}>
+            {formatCurrency(totalPago)}
+          </ThemedText>
+        </View>
+        <View style={styles.metricDivider} />
+        <View style={styles.metric}>
+          <ThemedText style={styles.metricLabel}>Mesas</ThemedText>
+          <ThemedText style={styles.metricValue}>{mesasLabel}</ThemedText>
+        </View>
       </View>
 
       <View style={styles.progressTrack}>
@@ -54,15 +71,15 @@ export function MesasClienteHeroCard({
       <ThemedText style={styles.hint}>{pendentesLabel}</ThemedText>
 
       {onMarcarCobrado && !cobrado ? (
-        <Pressable
-          style={[styles.marcarBtn, marcandoCobrado && styles.marcarBtnDisabled]}
+        <FlowHubAddButton
+          variant="primary"
+          label="Marcar cobrado na viagem"
           onPress={onMarcarCobrado}
           disabled={marcandoCobrado}
-          accessibilityLabel="Marcar recebido na viagem">
-          <ThemedText style={styles.marcarBtnText}>Marcar recebido na viagem</ThemedText>
-        </Pressable>
+          style={styles.marcarBtn}
+        />
       ) : cobrado ? (
-        <ThemedText style={styles.cobradoHint}>Recebido na viagem</ThemedText>
+        <ThemedText style={styles.cobradoHint}>Cobrado na viagem</ThemedText>
       ) : null}
     </View>
   );
@@ -73,49 +90,45 @@ const styles = StyleSheet.create({
     backgroundColor: FlowHubColors.white,
     borderRadius: Radius.xl,
     padding: Spacing.four,
-    gap: Spacing.two,
-  },
-  eyebrow: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: FeatureColors.expense,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  heroValue: {
-    ...Typography.heroValue,
-    fontSize: 28,
-    lineHeight: 34,
-    color: FeatureColors.expense,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
     gap: Spacing.one,
   },
-  metricText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: FlowHubColors.darkGray,
+  eyebrow: {
+    ...ClientesTypography.sectionEyebrow,
+    color: FlowHubColors.petroleum,
   },
-  metricValue: {
-    fontWeight: '700',
-    color: '#16A34A',
+  heroValue: {
+    ...ClientesTypography.heroValue,
+    color: FlowHubColors.navy,
+    marginTop: Spacing.one,
   },
-  metricDot: {
-    fontSize: 13,
-    color: FlowHubColors.darkGray,
+  heroValueExpense: { color: FeatureColors.expense },
+  metricsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: Spacing.two,
+    borderTopWidth: 1,
+    borderTopColor: FlowHubPalette.borderSubtle,
+    marginTop: Spacing.one,
+    marginBottom: Spacing.one,
   },
+  metric: { flex: 1, gap: 4, alignItems: 'center' },
+  metricDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: FlowHubPalette.borderSubtle,
+    marginHorizontal: Spacing.two,
+  },
+  metricLabel: { ...ClientesTypography.kpiLabel, color: FlowHubColors.darkGray },
+  metricValue: { ...ClientesTypography.kpiValue, color: FlowHubColors.navy },
   progressTrack: {
-    height: 6,
-    backgroundColor: '#E2E8EE',
+    height: 5,
+    backgroundColor: FlowHubPalette.surfaceSunken,
     borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#16A34A',
+    backgroundColor: FeatureColors.income,
     borderRadius: 3,
   },
   hint: {
@@ -123,24 +136,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: FlowHubColors.petroleum,
     lineHeight: 17,
-  },
-  marcarBtn: {
     marginTop: Spacing.one,
-    backgroundColor: FlowHubColors.navy,
-    borderRadius: Radius.md,
-    paddingVertical: 12,
-    alignItems: 'center',
   },
-  marcarBtnDisabled: { opacity: 0.7 },
-  marcarBtnText: {
-    color: FlowHubColors.white,
-    fontWeight: '700',
-    fontSize: 14,
-  },
+  marcarBtn: { marginTop: Spacing.two, alignSelf: 'stretch', marginHorizontal: 0 },
   cobradoHint: {
-    marginTop: Spacing.one,
+    marginTop: Spacing.two,
     fontSize: 13,
     fontWeight: '700',
-    color: '#16A34A',
+    color: FeatureColors.income,
   },
 });

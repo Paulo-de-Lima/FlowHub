@@ -144,7 +144,7 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
       await toggleClienteCobrado(cobrancaId, confirmItem.cliente.id, true);
       setConfirmVisible(false);
       setConfirmItem(null);
-      showSuccess('Cliente marcado como recebido na viagem.');
+      showSuccess('Cliente marcado como cobrado na viagem.');
       await loadData(true);
     } catch (err) {
       setConfirmError(err instanceof Error ? err.message : 'Erro ao marcar cobrado.');
@@ -157,7 +157,7 @@ export function useCobrancaClientesScreen(cobrancaIdParam: string | undefined) {
     setActionError(null);
     try {
       await toggleClienteCobrado(cobrancaId, item.cliente.id, false);
-      showSuccess('Marcação de recebido desfeita.');
+      showSuccess('Marcação de cobrado desfeita.');
       await loadData(true);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Erro ao desfazer cobrança.');

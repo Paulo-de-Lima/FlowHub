@@ -13,6 +13,7 @@ import {
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SymbolView } from 'expo-symbols';
 
+import { FlowHubModalHeaderStrip } from '@/components/ui/flowHubModalStyles';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, modalWebCard, QuickActionColors, Radius, Spacing } from '@/constants/theme';
 import type { Cliente } from '@/services/api';
@@ -118,6 +119,7 @@ export function CobrancaAddClienteModal({
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={[styles.card, cardShadowSoft]}>
+          <FlowHubModalHeaderStrip />
           <ThemedText style={styles.title}>Adicionar cliente</ThemedText>
 
           <View style={styles.tabRow}>

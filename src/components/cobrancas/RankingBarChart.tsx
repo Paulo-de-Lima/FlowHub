@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
-import { FlowHubColors, Radius, Spacing } from '@/constants/theme';
+import { FlowHubColors, FlowHubPalette, Radius, Spacing } from '@/constants/theme';
 import type { DashboardRankingItem } from '@/services/api';
 
 const BAR_MAX_HEIGHT = 88;
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     minHeight: 140,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: FlowHubColors.lightGray,
+    backgroundColor: FlowHubPalette.surfaceTint,
     borderRadius: Radius.md,
     gap: Spacing.two,
   },

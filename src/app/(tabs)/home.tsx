@@ -10,7 +10,8 @@ import { HomePendenciasSection } from '@/components/home/home-pendencias-section
 import { HomeQuickActions } from '@/components/home/home-quick-actions';
 import { formatCobrancaTitulo, formatIntervaloDias, formatProximaViagem, formatRepeticaoPrevista } from '@/components/cobrancas/cobrancas-utils';
 import { getCurrentMonthLabel } from '@/components/home/home-utils';
-import { FlowHubColors, HomeLayout, Spacing } from '@/constants/theme';
+import { FlowHubScreenBackdrop } from '@/components/ui/FlowHubScreenBackdrop';
+import { HomeLayout, Spacing } from '@/constants/theme';
 import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
 import { getCobrancas, type Cobranca } from '@/services/api';
 
@@ -52,7 +53,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <View style={styles.screen}>
+    <FlowHubScreenBackdrop>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollPad }]}
@@ -90,9 +91,6 @@ export default function HomeScreen() {
             clients={kpis.clients}
             billings={kpis.billings}
             criticalStock={kpis.criticalStock}
-            onPressClients={() => router.push('/clientes')}
-            onPressBillings={() => router.push('/cobrancas')}
-            onPressStock={() => router.push('/estoque')}
           />
 
           <HomeQuickActions />
@@ -103,15 +101,11 @@ export default function HomeScreen() {
           />
         </View>
       </ScrollView>
-    </View>
+    </FlowHubScreenBackdrop>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: FlowHubColors.lightGray,
-  },
   scroll: {
     flex: 1,
   },
@@ -120,9 +114,11 @@ const styles = StyleSheet.create({
     marginTop: HomeLayout.heroOverlap,
     paddingHorizontal: Spacing.four,
     zIndex: 3,
+    marginBottom: Spacing.four,
   },
   body: {
     paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.two,
     gap: Spacing.four,
   },
 });

@@ -5,6 +5,7 @@ export default function CalculadoraScreen() {
     <PlaceholderScreen
       title="Calculadora"
       description="Ferramentas de cálculo rápido. Em breve."
+      icon={{ ios: 'function', android: 'calculate', web: 'calculate' }}
     />
   );
 }

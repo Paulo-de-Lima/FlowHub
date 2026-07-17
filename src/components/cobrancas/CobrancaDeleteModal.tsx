@@ -1,6 +1,7 @@
 import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 
+import { FlowHubModalHeaderStrip } from '@/components/ui/flowHubModalStyles';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
 import type { Cobranca } from '@/services/api';
@@ -26,6 +27,7 @@ export function CobrancaDeleteModal({
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={[styles.card, cardShadowSoft]} onPress={(e) => e.stopPropagation()}>
+          <FlowHubModalHeaderStrip />
           <View style={styles.iconWrap}>
             <SymbolView
               name={{ ios: 'trash.fill', android: 'delete', web: 'delete' }}

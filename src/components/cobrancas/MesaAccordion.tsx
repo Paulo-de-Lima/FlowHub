@@ -9,11 +9,13 @@ import Animated, {
 
 import { formatCurrency, saldoRegistro, sortRegistrosCronologico, isRegistroMaisRecente } from '@/components/cobrancas/cobrancas-utils';
 import { RegistroCard } from '@/components/cobrancas/RegistroCard';
+import { FlowHubAddButton } from '@/components/ui/FlowHubAddButton';
 import { ThemedText } from '@/components/themed-text';
 import {
   cardShadowSoft,
   FeatureColors,
   FlowHubColors,
+  FlowHubPalette,
   QuickActionColors,
   Radius,
   SemanticColors,
@@ -100,10 +102,11 @@ export function MesaAccordion({
           <Pressable
             style={({ pressed }) => [styles.editBtn, pressed && styles.pressed]}
             onPress={onEditNumeracao}
-            accessibilityLabel="Editar numeração">
+            accessibilityLabel="Editar numeração"
+            hitSlop={6}>
             <SymbolView
               name={{ ios: 'pencil', android: 'edit', web: 'edit' }}
-              size={16}
+              size={18}
               tintColor={FlowHubColors.petroleum}
             />
           </Pressable>
@@ -113,10 +116,11 @@ export function MesaAccordion({
           <Pressable
             style={({ pressed }) => [styles.deleteBtn, pressed && styles.pressed]}
             onPress={onDeleteMesa}
-            accessibilityLabel="Excluir mesa">
+            accessibilityLabel="Excluir mesa"
+            hitSlop={6}>
             <SymbolView
               name={{ ios: 'trash', android: 'delete', web: 'delete' }}
-              size={16}
+              size={18}
               tintColor={FeatureColors.expense}
             />
           </Pressable>
@@ -143,9 +147,12 @@ export function MesaAccordion({
                 />
               </View>
               <ThemedText style={styles.empty}>Nenhuma leitura ainda</ThemedText>
-              <Pressable style={styles.emptyCta} onPress={onNovaLeitura}>
-                <ThemedText style={styles.emptyCtaText}>Adicionar leitura</ThemedText>
-              </Pressable>
+              <FlowHubAddButton
+                variant="primary"
+                label="Adicionar leitura"
+                onPress={onNovaLeitura}
+                style={styles.emptyCtaBtn}
+              />
             </View>
           ) : (
             <View style={styles.timeline}>
@@ -175,14 +182,7 @@ export function MesaAccordion({
           )}
 
           {mesa.registros.length > 0 ? (
-            <Pressable style={styles.novaBtn} onPress={onNovaLeitura}>
-              <SymbolView
-                name={{ ios: 'plus', android: 'add', web: 'add' }}
-                size={14}
-                tintColor={FlowHubColors.petroleum}
-              />
-              <ThemedText style={styles.novaBtnText}>Nova leitura</ThemedText>
-            </Pressable>
+            <FlowHubAddButton variant="secondary" label="Nova leitura" onPress={onNovaLeitura} />
           ) : null}
 
           {onDeleteMesa ? (
@@ -210,10 +210,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E2E8EE',
+    borderColor: FlowHubPalette.borderSubtle,
   },
   cardExpanded: {
-    borderColor: 'rgba(20, 200, 196, 0.35)',
+    borderColor: FlowHubPalette.borderSubtle,
   },
   header: {
     flexDirection: 'row',
@@ -223,9 +223,8 @@ const styles = StyleSheet.create({
     backgroundColor: FlowHubColors.white,
   },
   headerExpanded: {
-    backgroundColor: QuickActionColors.background,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(20, 200, 196, 0.2)',
+    borderBottomColor: FlowHubPalette.borderSubtle,
   },
   mesaIcon: {
     width: 40,
@@ -283,37 +282,39 @@ const styles = StyleSheet.create({
     color: FeatureColors.expense,
   },
   editBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: FlowHubColors.white,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: FlowHubPalette.surfaceSunken,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(31, 78, 109, 0.15)',
+    borderColor: FlowHubPalette.borderSubtle,
   },
   deleteBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     backgroundColor: FeatureColors.expenseBg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.18)',
+    borderColor: 'rgba(239, 68, 68, 0.2)',
   },
   chevronWrap: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(20, 200, 196, 0.14)',
+    backgroundColor: FlowHubColors.lightGray,
     alignItems: 'center',
     justifyContent: 'center',
   },
   body: {
-    backgroundColor: FlowHubColors.lightGray,
+    backgroundColor: FlowHubColors.white,
     padding: Spacing.three,
     gap: Spacing.two,
+    borderTopWidth: 1,
+    borderTopColor: FlowHubPalette.borderSubtle,
   },
   timeline: { gap: 0 },
   timelineItem: {
@@ -369,33 +370,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: FlowHubColors.darkGray,
   },
-  emptyCta: {
-    backgroundColor: FlowHubColors.navy,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: 10,
-  },
-  emptyCtaText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: FlowHubColors.white,
-  },
-  novaBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: QuickActionColors.background,
-    borderRadius: Radius.md,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(20, 200, 196, 0.35)',
-  },
-  novaBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: FlowHubColors.petroleum,
-  },
+  emptyCtaBtn: { alignSelf: 'stretch', marginHorizontal: 0 },
   excluirMesaBtn: {
     flexDirection: 'row',
     alignItems: 'center',

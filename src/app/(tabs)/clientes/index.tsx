@@ -7,13 +7,12 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 
 import { CobrancaAddBar } from '@/components/cobrancas/CobrancaAddBar';
 import { ConfirmDeleteModal } from '@/components/cobrancas/ConfirmDeleteModal';
 import { FlowHubToast } from '@/components/cobrancas/FlowHubToast';
+import { FlowHubAddButton } from '@/components/ui/FlowHubAddButton';
 import { ClienteFormModal } from '@/components/clientes/ClienteFormModal';
 import { ClienteListCard } from '@/components/clientes/ClienteListCard';
 import { ClienteListCardSkeleton } from '@/components/clientes/ClienteListCardSkeleton';
@@ -21,13 +20,13 @@ import { ClientesEmptyState } from '@/components/clientes/ClientesEmptyState';
 import { ClientesHeader } from '@/components/clientes/ClientesHeader';
 import { ClientesHeroCard } from '@/components/clientes/ClientesHeroCard';
 import { ClientesKpiStrip } from '@/components/clientes/ClientesKpiStrip';
+import { ClientesScreenBackdrop } from '@/components/clientes/ClientesScreenBackdrop';
 import { ClientesSearchBar } from '@/components/clientes/ClientesSearchBar';
 import { clienteDetailPath } from '@/components/clientes/route-utils';
 import { useClientesScreen } from '@/components/clientes/use-clientes-screen';
 import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
 import { ThemedText } from '@/components/themed-text';
 import {
-  cardShadowSoft,
   FlowHubColors,
   HomeLayout,
   Radius,
@@ -50,7 +49,7 @@ export default function ClientesListScreen() {
       <ClientesHeader />
       <View style={styles.heroWrap}>
         {s.loading && s.clientes.length === 0 ? (
-          <View style={[styles.heroSkeleton, cardShadowSoft]} />
+          <View style={styles.heroSkeleton} />
         ) : (
           <ClientesHeroCard
             total={s.stats.total}
@@ -100,7 +99,8 @@ export default function ClientesListScreen() {
     );
 
   return (
-    <View style={styles.screen}>
+    <ClientesScreenBackdrop>
+      <View style={styles.screen}>
       <FlowHubToast message={s.successMessage} onDismiss={s.dismissSuccess} />
 
       <FlatList
@@ -128,20 +128,12 @@ export default function ClientesListScreen() {
       />
 
       {!isWeb ? (
-        <Pressable
-          style={[styles.fab, cardShadowSoft, { bottom: scrollPad }]}
+        <FlowHubAddButton
+          variant="fab"
           onPress={s.openCreate}
-          accessibilityLabel="Novo cliente">
-          <LinearGradient
-            colors={[FlowHubColors.turquoise, '#0FB5B1']}
-            style={styles.fabGradient}>
-            <SymbolView
-              name={{ ios: 'plus', android: 'add', web: 'add' }}
-              size={28}
-              tintColor={FlowHubColors.white}
-            />
-          </LinearGradient>
-        </Pressable>
+          accessibilityLabel="Novo cliente"
+          style={{ position: 'absolute', right: Spacing.four, bottom: scrollPad }}
+        />
       ) : null}
 
       <ClienteFormModal
@@ -175,23 +167,23 @@ export default function ClientesListScreen() {
         onClose={s.closeDelete}
         onConfirm={s.handleConfirmDelete}
       />
-    </View>
+      </View>
+    </ClientesScreenBackdrop>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: FlowHubColors.lightGray },
+  screen: { flex: 1, backgroundColor: 'transparent' },
   list: { flex: 1 },
-  heroWrap: { marginTop: HomeLayout.heroOverlap, paddingHorizontal: Spacing.four, zIndex: 3 },
+  heroWrap: { marginTop: HomeLayout.heroOverlap, paddingHorizontal: Spacing.four, zIndex: 3, marginBottom: Spacing.four },
   heroSkeleton: {
     backgroundColor: FlowHubColors.white,
     borderRadius: Radius.xl,
-    padding: Spacing.six,
     minHeight: 140,
   },
   filtersBlock: {
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
+    paddingTop: Spacing.two,
     gap: Spacing.four,
   },
   listContent: {
@@ -215,17 +207,4 @@ const styles = StyleSheet.create({
   },
   retryText: { color: FlowHubColors.navy, fontWeight: '700' },
   filterEmpty: { textAlign: 'center', padding: Spacing.four },
-  fab: {
-    position: 'absolute',
-    right: Spacing.four,
-    borderRadius: 28,
-    overflow: 'hidden',
-  },
-  fabGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });

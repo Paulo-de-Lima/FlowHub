@@ -2,14 +2,17 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { FlowHubScreenBackdrop } from '@/components/ui/FlowHubScreenBackdrop';
+import { FlowHubAddButton } from '@/components/ui/FlowHubAddButton';
+import { FlowHubEmptyState } from '@/components/ui/FlowHubEmptyState';
+import { FlowHubSectionHeader } from '@/components/ui/FlowHubSectionHeader';
 import { router, useFocusEffect } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 
 import { CobrancaCard } from '@/components/cobrancas/CobrancaCard';
 import { CobrancaDashboard } from '@/components/cobrancas/CobrancaDashboard';
@@ -27,7 +30,6 @@ import {
   HomeLayout,
   Radius,
   Spacing,
-  Typography,
 } from '@/constants/theme';
 import {
   createCobranca,
@@ -58,6 +60,7 @@ export default function CobrancasScreen() {
   const [arrecadadoMes, setArrecadadoMes] = useState(0);
   const monthLabel = getCurrentMonthLabel();
   const scrollPad = useTabBarScrollPadding();
+  const isWeb = Platform.OS === 'web';
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) {
@@ -221,13 +224,19 @@ export default function CobrancasScreen() {
                 monthLabel={monthLabel}
               />
 
-              <CobrancaDashboard data={dashboard} loading={loading && !dashboard} defaultExpanded={false} />
+              <CobrancaDashboard data={dashboard} loading={loading && !dashboard} defaultExpanded />
 
               {cobrancas.length > 0 ? (
-                <View style={styles.listTitleRow}>
-                  <ThemedText style={styles.listSectionTitle}>Suas rotas</ThemedText>
-                  <ThemedText style={styles.listCount}>{cobrancas.length}</ThemedText>
-                </View>
+                <FlowHubSectionHeader title="Suas rotas" count={cobrancas.length} />
+              ) : null}
+
+              {isWeb ? (
+                <FlowHubAddButton
+                  variant="bar"
+                  label="Nova cobrança"
+                  onPress={openCreateModal}
+                  style={styles.webAddBar}
+                />
               ) : null}
             </>
           )}
@@ -237,7 +246,7 @@ export default function CobrancasScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <FlowHubScreenBackdrop>
       <FlatList
         data={loading || error ? [] : cobrancas}
         keyExtractor={(item) => String(item.id)}
@@ -254,22 +263,13 @@ export default function CobrancasScreen() {
         ListHeaderComponent={renderListHeader}
         ListEmptyComponent={
           !loading && !error ? (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIconWrap}>
-                <SymbolView
-                  name={{ ios: 'map.fill', android: 'map', web: 'map' }}
-                  size={36}
-                  tintColor={FlowHubColors.petroleum}
-                />
-              </View>
-              <ThemedText style={styles.emptyTitle}>Nenhuma viagem ainda</ThemedText>
-              <ThemedText style={styles.emptyText} themeColor="textSecondary">
-                Planeje sua primeira rota de cobrança e acompanhe tudo por aqui.
-              </ThemedText>
-              <Pressable style={styles.emptyCta} onPress={openCreateModal}>
-                <ThemedText style={styles.emptyCtaText}>Planejar primeira viagem</ThemedText>
-              </Pressable>
-            </View>
+            <FlowHubEmptyState
+              icon={{ ios: 'map.fill', android: 'map', web: 'map' }}
+              title="Nenhuma viagem ainda"
+              description="Planeje sua primeira rota de cobrança e acompanhe tudo por aqui."
+              actionLabel="Planejar primeira viagem"
+              onAction={openCreateModal}
+            />
           ) : null
         }
         renderItem={({ item }) => (
@@ -285,20 +285,14 @@ export default function CobrancasScreen() {
         )}
       />
 
-      <Pressable
-        style={[styles.fab, cardShadowSoft, { bottom: scrollPad }]}
-        onPress={openCreateModal}
-        accessibilityLabel="Nova cobrança">
-        <LinearGradient
-          colors={[FlowHubColors.turquoise, '#0FB5B1']}
-          style={styles.fabGradient}>
-          <SymbolView
-            name={{ ios: 'plus', android: 'add', web: 'add' }}
-            size={28}
-            tintColor={FlowHubColors.white}
-          />
-        </LinearGradient>
-      </Pressable>
+      {!isWeb ? (
+        <FlowHubAddButton
+          variant="fab"
+          onPress={openCreateModal}
+          accessibilityLabel="Nova cobrança"
+          style={{ position: 'absolute', right: Spacing.four, bottom: scrollPad }}
+        />
+      ) : null}
 
       <CobrancaFormModal
         visible={modalVisible}
@@ -317,7 +311,7 @@ export default function CobrancasScreen() {
         onClose={closeDeleteModal}
         onConfirm={handleDeleteConfirm}
       />
-    </View>
+    </FlowHubScreenBackdrop>
   );
 }
 
@@ -330,6 +324,7 @@ const styles = StyleSheet.create({
     marginTop: HomeLayout.heroOverlap,
     paddingHorizontal: Spacing.four,
     zIndex: 3,
+    marginBottom: Spacing.four,
   },
   heroSkeleton: {
     backgroundColor: FlowHubColors.white,
@@ -341,30 +336,10 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
+    paddingTop: Spacing.two,
     gap: Spacing.four,
   },
-  listTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  listSectionTitle: {
-    ...Typography.sectionTitle,
-    color: FlowHubColors.navy,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    fontSize: 13,
-  },
-  listCount: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: FlowHubColors.petroleum,
-    backgroundColor: '#E0F9F8',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
+  webAddBar: { marginHorizontal: 0, marginTop: Spacing.four, marginBottom: Spacing.four },
   listContent: {
     flexGrow: 1,
   },
@@ -393,56 +368,5 @@ const styles = StyleSheet.create({
     color: FlowHubColors.navy,
     fontWeight: '700',
     fontSize: 14,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.five,
-    gap: Spacing.two,
-  },
-  emptyIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#E0F9F8',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.one,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: FlowHubColors.navy,
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 21,
-    maxWidth: 280,
-  },
-  emptyCta: {
-    marginTop: Spacing.two,
-    backgroundColor: FlowHubColors.navy,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-  },
-  emptyCtaText: {
-    color: FlowHubColors.white,
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  fab: {
-    position: 'absolute',
-    right: Spacing.four,
-    borderRadius: 28,
-    overflow: 'hidden',
-  },
-  fabGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

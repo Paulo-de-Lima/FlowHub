@@ -15,6 +15,7 @@ import {
   formatValorFichaInput,
   parseValorFichaInput,
 } from '@/components/cobrancas/cobrancas-utils';
+import { FlowHubModalHeaderStrip } from '@/components/ui/flowHubModalStyles';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, Radius, Spacing } from '@/constants/theme';
 
@@ -76,6 +77,7 @@ export function NovaMesaModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.overlayPress} onPress={onClose}>
           <Pressable style={[styles.card, cardShadowSoft]} onPress={(e) => e.stopPropagation()}>
+            <FlowHubModalHeaderStrip />
             <ThemedText style={styles.title}>{title}</ThemedText>
 
             <View style={styles.field}>

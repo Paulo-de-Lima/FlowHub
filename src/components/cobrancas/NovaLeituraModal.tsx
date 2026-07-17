@@ -27,6 +27,7 @@ import {
   parseDisplayDateToISO,
   todayDisplay,
 } from '@/components/cobrancas/cobrancas-utils';
+import { FlowHubModalHeaderStrip } from '@/components/ui/flowHubModalStyles';
 import { ThemedText } from '@/components/themed-text';
 import { cardShadowSoft, FlowHubColors, modalWebCard, QuickActionColors, Radius, SemanticColors, Spacing } from '@/constants/theme';
 import type { Mesa, RegistroMesa } from '@/services/api';
@@ -158,6 +159,7 @@ export function NovaLeituraModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.overlayPress} onPress={onClose}>
           <Pressable style={[styles.card, cardShadowSoft]} onPress={(e) => e.stopPropagation()}>
+            <FlowHubModalHeaderStrip />
             <ThemedText style={styles.title}>{isEdit ? 'Editar leitura' : 'Nova leitura'}</ThemedText>
             <ThemedText style={styles.context} themeColor="textSecondary">
               Mesa {mesa?.numeracao ?? '—'} · Ficha {formatCurrency(valorFicha)}

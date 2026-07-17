@@ -1,14 +1,31 @@
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
-import { cardShadowSoft, FlowHubColors, Radius, SemanticColors, Spacing } from '@/constants/theme';
+import { FlowHubColors, FlowHubPalette, Radius, SemanticColors, Spacing } from '@/constants/theme';
 
 export function ClienteListCardSkeleton() {
+  const shimmer = useSharedValue(0);
+
+  useEffect(() => {
+    shimmer.value = withRepeat(withTiming(1, { duration: 1200 }), -1, true);
+  }, [shimmer]);
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    opacity: 0.3 + shimmer.value * 0.2,
+  }));
+
   return (
-    <View style={[styles.card, cardShadowSoft]}>
-      <View style={styles.avatar} />
+    <View style={styles.card}>
+      <Animated.View style={[styles.avatar, shimmerStyle]} />
       <View style={styles.textCol}>
-        <View style={styles.lineTitle} />
-        <View style={styles.lineSub} />
+        <Animated.View style={[styles.lineTitle, shimmerStyle]} />
+        <Animated.View style={[styles.lineSub, shimmerStyle]} />
       </View>
     </View>
   );
@@ -25,8 +42,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: SemanticColors.borderSubtle,
   },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: SemanticColors.borderSubtle },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: FlowHubPalette.surfaceSunken,
+  },
   textCol: { flex: 1, gap: 8 },
-  lineTitle: { height: 16, width: '55%', borderRadius: 6, backgroundColor: SemanticColors.borderSubtle },
-  lineSub: { height: 12, width: '40%', borderRadius: 4, backgroundColor: SemanticColors.borderSubtle },
+  lineTitle: {
+    height: 16,
+    width: '55%',
+    borderRadius: 6,
+    backgroundColor: FlowHubPalette.surfaceSunken,
+  },
+  lineSub: {
+    height: 12,
+    width: '40%',
+    borderRadius: 4,
+    backgroundColor: FlowHubPalette.surfaceSunken,
+  },
 });

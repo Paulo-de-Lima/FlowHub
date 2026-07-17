@@ -25,8 +25,7 @@ export function FlowHubToast({ message, onDismiss, durationMs = 2500 }: FlowHubT
 
   return (
     <View
-      style={[styles.container, { top: insets.top + Spacing.two }]}
-      pointerEvents="box-none"
+      style={[styles.container, { top: insets.top + Spacing.two, pointerEvents: 'box-none' as const }]}
       accessibilityLiveRegion="polite">
       <Pressable
         style={styles.toast}
