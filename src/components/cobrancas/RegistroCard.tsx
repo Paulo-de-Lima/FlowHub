@@ -51,7 +51,8 @@ export function RegistroCard({
       : saldo > 0
         ? styles.statusPendente
         : styles.statusOk;
-    const canRegistrarPagamento = !quitado;
+    const pagamentoLabel =
+      quitado || parcial || valorPago > 0 ? 'Ajustar pagamento' : 'Registrar pagamento';
 
     return (
       <View style={styles.compactWrap}>
@@ -69,26 +70,25 @@ export function RegistroCard({
           </View>
         </Pressable>
 
-        {canRegistrarPagamento ? (
-          <Pressable
-            style={({ pressed }) => [styles.pagamentoBtnCompact, pressed && styles.pressed]}
-            onPress={onRegistrarPagamento}
-            accessibilityLabel="Registrar pagamento">
-            <SymbolView
-              name={{ ios: 'banknote', android: 'payments', web: 'payments' }}
-              size={15}
-              tintColor={FlowHubColors.petroleum}
-            />
-            <ThemedText style={styles.pagamentoTextCompact}>
-              {parcial ? 'Ajustar pagamento' : 'Registrar pagamento'}
-            </ThemedText>
-            <SymbolView
-              name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-              size={12}
-              tintColor={FlowHubColors.darkGray}
-            />
-          </Pressable>
-        ) : null}
+        <Pressable
+          style={({ pressed }) => [styles.pagamentoBtnCompact, pressed && styles.pressed]}
+          onPress={onRegistrarPagamento}
+          accessibilityLabel={pagamentoLabel}>
+          <SymbolView
+            name={{ ios: 'banknote', android: 'payments', web: 'payments' }}
+            size={15}
+            tintColor={quitado ? FeatureColors.income : FlowHubColors.petroleum}
+          />
+          <ThemedText
+            style={[styles.pagamentoTextCompact, quitado && styles.pagamentoTextCompactQuitado]}>
+            {pagamentoLabel}
+          </ThemedText>
+          <SymbolView
+            name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+            size={12}
+            tintColor={FlowHubColors.darkGray}
+          />
+        </Pressable>
       </View>
     );
   }
@@ -168,7 +168,7 @@ export function RegistroCard({
             tintColor={quitado ? FeatureColors.income : FlowHubColors.petroleum}
           />
           <ThemedText style={[styles.pagamentoText, quitado && styles.pagamentoTextQuitado]}>
-            {quitado ? 'Pagamento registrado' : parcial ? 'Ajustar pagamento' : 'Registrar pagamento'}
+            {quitado || parcial || valorPago > 0 ? 'Ajustar pagamento' : 'Registrar pagamento'}
           </ThemedText>
           <SymbolView
             name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
@@ -400,6 +400,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: FlowHubColors.petroleum,
+  },
+  pagamentoTextCompactQuitado: {
+    color: FeatureColors.income,
   },
   pressed: { opacity: 0.88 },
 });

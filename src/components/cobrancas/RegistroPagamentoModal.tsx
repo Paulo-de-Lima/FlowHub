@@ -51,6 +51,8 @@ export function RegistroPagamentoModal({
 
   const saldo = registro ? Math.max(0, valorTotal - valorPagoNum) : 0;
   const displayError = localError ?? error;
+  const isAjuste = (registro?.valor_pago ?? 0) > 0;
+  const modalTitle = isAjuste ? 'Ajustar pagamento' : 'Registrar pagamento';
 
   function handleSave() {
     if (!registro) return;
@@ -74,7 +76,7 @@ export function RegistroPagamentoModal({
         <Pressable style={styles.overlayPress} onPress={onClose}>
           <Pressable style={[styles.card, cardShadowSoft]} onPress={(e) => e.stopPropagation()}>
             <FlowHubModalHeaderStrip />
-            <ThemedText style={styles.title}>Registrar pagamento</ThemedText>
+            <ThemedText style={styles.title}>{modalTitle}</ThemedText>
             {registro ? (
               <ThemedText style={styles.context} themeColor="textSecondary">
                 Leitura {registro.leitura} · {formatCurrency(valorTotal)} no total
@@ -129,7 +131,9 @@ export function RegistroPagamentoModal({
               {saving ? (
                 <ActivityIndicator color={FlowHubColors.white} />
               ) : (
-                <ThemedText style={styles.saveBtnText}>Salvar pagamento</ThemedText>
+                <ThemedText style={styles.saveBtnText}>
+                  {isAjuste ? 'Salvar ajuste' : 'Salvar pagamento'}
+                </ThemedText>
               )}
             </Pressable>
 
