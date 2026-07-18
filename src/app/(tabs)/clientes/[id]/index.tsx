@@ -21,7 +21,7 @@ import {
   CLIENTES_LIST_PATH,
   clienteMesasPath,
 } from '@/components/clientes/route-utils';
-import { FlowHubNavButton } from '@/components/ui/FlowHubAddButton';
+import { FlowHubAddButton, FlowHubNavButton } from '@/components/ui/FlowHubAddButton';
 import { FlowHubHeaderActionButton } from '@/components/ui/FlowHubScreenHeader';
 import { useClienteDetailScreen } from '@/components/clientes/use-cliente-detail-screen';
 import type { ClienteFormData } from '@/components/clientes/use-clientes-screen';
@@ -199,13 +199,28 @@ export default function ClienteDetailScreen() {
             </View>
           </View>
 
-          <FlowHubNavButton
-            label="Gerenciar mesas e leituras"
-            onPress={() => {
-              if (s.clienteId != null) router.push(clienteMesasPath(s.clienteId));
-            }}
-            style={styles.cta}
-          />
+          <View style={styles.actions}>
+            <FlowHubNavButton
+              label="Gerenciar mesas e leituras"
+              onPress={() => {
+                if (s.clienteId != null) router.push(clienteMesasPath(s.clienteId));
+              }}
+              style={styles.ctaBtn}
+            />
+            <FlowHubAddButton
+              variant="danger"
+              label="Excluir cliente"
+              leadingIcon="trash"
+              showPlus={false}
+              layout="fill"
+              onPress={() => {
+                setDeleteError(null);
+                setDeleteVisible(true);
+              }}
+              accessibilityLabel="Excluir cliente"
+              style={styles.ctaBtn}
+            />
+          </View>
         </ScrollView>
       </View>
       </ClientesScreenBackdrop>
@@ -339,7 +354,12 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: FlowHubColors.navy,
   },
-  cta: { marginTop: Spacing.four, marginHorizontal: Spacing.four },
+  actions: {
+    marginTop: Spacing.four,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.two,
+  },
+  ctaBtn: { marginHorizontal: 0, marginTop: 0, marginBottom: 0 },
   errorText: { color: FlowHubColors.petroleum, textAlign: 'center', paddingHorizontal: Spacing.four },
   retryBtn: {
     backgroundColor: FlowHubColors.turquoise,

@@ -325,3 +325,149 @@ export async function updateRegistro(
 export async function deleteRegistro(id: number): Promise<void> {
   await request<void>(`/registros/${id}`, { method: 'DELETE' });
 }
+
+// --- Materiais / Estoque ---
+
+export type MaterialStatus = 'VAZIO' | 'BAIXO' | 'ALTO';
+
+export type Material = {
+  id: number;
+  nome: string;
+  unidade: string;
+  quantidade: number;
+  estoqueMinimo: number;
+  status: MaterialStatus;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type CompraMaterialInput = {
+  nome: string;
+  unidade?: string;
+  quantidade: number;
+  valorTotal: number;
+  dataCompra?: string;
+};
+
+export type CompraMaterialResponse = {
+  material: Material;
+  despesa: { id: number; origem: string; valor: number; dataGasto: string | null };
+};
+
+export async function getMateriais(status?: MaterialStatus[]): Promise<Material[]> {
+  const query =
+    status && status.length > 0 ? `?status=${status.join(',')}` : '';
+  return request<Material[]>(`/materiais${query}`);
+}
+
+export async function registrarCompraMaterial(
+  data: CompraMaterialInput,
+): Promise<CompraMaterialResponse> {
+  return request<CompraMaterialResponse>('/materiais/compra', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+// --- Financeiro ---
+
+export type FinanceiroResumo = {
+  mes: string;
+  receitas: number;
+  despesas: number;
+  saldo: number;
+};
+
+export type LancamentoFinanceiro = {
+  id: number;
+  dataGasto: string | null;
+  origem: string;
+  tipo: 'receita' | 'despesa';
+  valor: number;
+  total: number;
+  materialId: number | null;
+  automatico: boolean;
+};
+
+export type LancamentosResponse = {
+  total: number;
+  lancamentos: LancamentoFinanceiro[];
+};
+
+export type CreateLancamentoInput = {
+  tipo: 'receita' | 'despesa';
+  origem: string;
+  valor: number;
+  dataGasto?: string;
+};
+
+export async function getFinanceiroResumo(mes?: string): Promise<FinanceiroResumo> {
+  const query = mes ? `?mes=${encodeURIComponent(mes)}` : '';
+  return request<FinanceiroResumo>(`/financeiro/resumo${query}`);
+}
+
+export async function getFinanceiroLancamentos(params?: {
+  mes?: string;
+  tipo?: 'receita' | 'despesa' | 'todos';
+  limit?: number;
+  offset?: number;
+}): Promise<LancamentosResponse> {
+  const search = new URLSearchParams();
+  if (params?.mes) search.set('mes', params.mes);
+  if (params?.tipo) search.set('tipo', params.tipo);
+  if (params?.limit != null) search.set('limit', String(params.limit));
+  if (params?.offset != null) search.set('offset', String(params.offset));
+  const qs = search.toString();
+  return request<LancamentosResponse>(`/financeiro/lancamentos${qs ? `?${qs}` : ''}`);
+}
+
+export async function createLancamento(data: CreateLancamentoInput): Promise<LancamentoFinanceiro> {
+  return request<LancamentoFinanceiro>('/financeiro/lancamentos', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+// --- Manutenções ---
+
+export type ManutencaoItem = {
+  id: number;
+  materialId: number;
+  materialNome: string;
+  unidade: string;
+  quantidade: number;
+};
+
+export type Manutencao = {
+  id: number;
+  clienteId: number;
+  clienteNome: string;
+  descricao: string;
+  data: string;
+  createdAt: string;
+  itens: ManutencaoItem[];
+};
+
+export type CreateManutencaoInput = {
+  clienteId: number;
+  descricao: string;
+  data?: string;
+  itens: { materialId: number; quantidade: number }[];
+};
+
+export async function getManutencoes(mes?: string): Promise<Manutencao[]> {
+  const query = mes ? `?mes=${encodeURIComponent(mes)}` : '';
+  return request<Manutencao[]>(`/manutencoes${query}`);
+}
+
+export async function createManutencao(data: CreateManutencaoInput): Promise<Manutencao> {
+  return request<Manutencao>('/manutencoes', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function getCurrentMonthKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}

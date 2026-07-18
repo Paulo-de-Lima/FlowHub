@@ -16,6 +16,7 @@ model clientes {
   cpf               String?             @db.VarChar(14)
   cobranca_clientes cobranca_clientes[]
   mesas             mesas[]
+  manutencoes       manutencoes[]
 }
 
 model cobranca_clientes {
@@ -41,24 +42,55 @@ model cobrancas {
 }
 
 model despesas {
-  id         Int           @id @default(autoincrement())
-  data_gasto DateTime      @db.Date
-  origem     String        @db.VarChar(300)
-  tipo       despesas_tipo
-  valor      Decimal       @db.Decimal(10, 2)
-  total      Decimal       @db.Decimal(10, 2)
-  created_at DateTime?     @default(now()) @db.Timestamp(0)
-  updated_at DateTime?     @default(now()) @db.Timestamp(0)
+  id          Int           @id @default(autoincrement())
+  data_gasto  DateTime      @db.Date
+  origem      String        @db.VarChar(300)
+  tipo        despesas_tipo
+  valor       Decimal       @db.Decimal(10, 2)
+  total       Decimal       @db.Decimal(10, 2)
+  material_id Int?
+  created_at  DateTime?     @default(now()) @db.Timestamp(0)
+  updated_at  DateTime?     @default(now()) @db.Timestamp(0)
+  materiais   materiais?    @relation(fields: [material_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([material_id])
 }
 
 model materiais {
-  id         Int              @id @default(autoincrement())
-  nome       String           @db.VarChar(100)
-  unidade    String           @db.VarChar(20)
-  quantidade Int              @default(0)
-  status     materiais_status @default(VAZIO)
-  created_at DateTime?        @default(now()) @db.Timestamp(0)
-  updated_at DateTime?        @default(now()) @db.Timestamp(0)
+  id                   Int                    @id @default(autoincrement())
+  nome                 String                 @db.VarChar(100)
+  unidade              String                 @db.VarChar(20)
+  quantidade           Int                    @default(0)
+  estoque_minimo       Int                    @default(5)
+  status               materiais_status       @default(VAZIO)
+  created_at           DateTime?              @default(now()) @db.Timestamp(0)
+  updated_at           DateTime?              @default(now()) @db.Timestamp(0)
+  manutencao_materiais manutencao_materiais[]
+  despesas             despesas[]
+}
+
+model manutencoes {
+  id         Int                    @id @default(autoincrement())
+  cliente_id Int
+  descricao  String                 @db.VarChar(500)
+  data       DateTime               @default(now()) @db.DateTime(0)
+  created_at DateTime               @default(now()) @db.Timestamp(0)
+  clientes   clientes               @relation(fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  itens      manutencao_materiais[]
+
+  @@index([cliente_id])
+}
+
+model manutencao_materiais {
+  id            Int         @id @default(autoincrement())
+  manutencao_id Int
+  material_id   Int
+  quantidade    Int
+  manutencoes   manutencoes @relation(fields: [manutencao_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  materiais     materiais   @relation(fields: [material_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([manutencao_id])
+  @@index([material_id])
 }
 
 model mesas {

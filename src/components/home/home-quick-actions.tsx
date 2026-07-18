@@ -1,5 +1,6 @@
 import { SymbolView } from 'expo-symbols';
 import { Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import {
@@ -17,16 +18,13 @@ const QUICK_ACTIONS = [
     id: 'novo-cliente',
     label: 'Novo\ncliente',
     icon: { ios: 'person.badge.plus', android: 'person_add', web: 'person_add' },
-  },
-  {
-    id: 'novo-registro',
-    label: 'Novo\nregistro',
-    icon: { ios: 'doc.text.fill', android: 'description', web: 'description' },
+    href: '/clientes' as const,
   },
   {
     id: 'nova-manutencao',
     label: 'Nova\nmanutenção',
     icon: { ios: 'wrench.and.screwdriver.fill', android: 'build', web: 'build' },
+    href: '/manutencao?nova=1' as const,
   },
   {
     id: 'nova-receita',
@@ -36,6 +34,7 @@ const QUICK_ACTIONS = [
       android: 'trending_up',
       web: 'trending_up',
     },
+    href: '/financeiro?novo=receita' as const,
   },
   {
     id: 'nova-despesa',
@@ -45,11 +44,13 @@ const QUICK_ACTIONS = [
       android: 'trending_down',
       web: 'trending_down',
     },
+    href: '/financeiro?novo=despesa' as const,
   },
   {
     id: 'novo-material',
-    label: 'Novo\nmaterial',
+    label: 'Registrar\ncompra',
     icon: { ios: 'shippingbox.fill', android: 'inventory_2', web: 'inventory_2' },
+    href: '/estoque?compra=1' as const,
   },
 ] as const;
 
@@ -72,7 +73,7 @@ export function HomeQuickActions() {
         { width: quickItemWidth },
         pressed && styles.pressed,
       ]}
-      onPress={() => {}}>
+      onPress={() => router.push(action.href)}>
       <View style={[styles.iconWrap, cardShadowSoft]}>
         <SymbolView name={action.icon} size={24} tintColor={FlowHubColors.petroleum} />
       </View>

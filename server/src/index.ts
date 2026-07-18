@@ -5,6 +5,9 @@ import express from 'express';
 
 import clientesRouter from './routes/clientes';
 import cobrancasRouter from './routes/cobrancas';
+import financeiroRouter from './routes/financeiro';
+import manutencoesRouter from './routes/manutencoes';
+import materiaisRouter from './routes/materiais';
 import mesasRouter from './routes/mesas';
 
 const app = express();
@@ -29,6 +32,9 @@ app.get('/health', (_req, res) => {
 
 app.use('/clientes', clientesRouter);
 app.use('/cobrancas', cobrancasRouter);
+app.use('/materiais', materiaisRouter);
+app.use('/financeiro', financeiroRouter);
+app.use('/manutencoes', manutencoesRouter);
 app.use('/', mesasRouter);
 
 app.listen(port, '0.0.0.0', () => {

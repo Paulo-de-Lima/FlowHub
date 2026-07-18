@@ -5,15 +5,25 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { HomeHeader } from '@/components/home/home-header';
 import { HomeHeroCard } from '@/components/home/home-hero-card';
 import { HomeKpiStrip } from '@/components/home/home-kpi-strip';
-import { HOME_MOCK } from '@/components/home/home-mock';
 import { HomePendenciasSection } from '@/components/home/home-pendencias-section';
 import { HomeQuickActions } from '@/components/home/home-quick-actions';
-import { formatCobrancaTitulo, formatIntervaloDias, formatProximaViagem, formatRepeticaoPrevista } from '@/components/cobrancas/cobrancas-utils';
+import {
+  formatCobrancaTitulo,
+  formatIntervaloDias,
+  formatProximaViagem,
+  formatRepeticaoPrevista,
+} from '@/components/cobrancas/cobrancas-utils';
 import { getCurrentMonthLabel } from '@/components/home/home-utils';
 import { FlowHubScreenBackdrop } from '@/components/ui/FlowHubScreenBackdrop';
 import { HomeLayout, Spacing } from '@/constants/theme';
 import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
-import { getCobrancas, type Cobranca } from '@/services/api';
+import {
+  getClientesSummary,
+  getCobrancas,
+  getFinanceiroResumo,
+  getMateriais,
+  type Cobranca,
+} from '@/services/api';
 
 export default function HomeScreen() {
   const { nome } = useLocalSearchParams<{ nome?: string }>();
@@ -21,8 +31,9 @@ export default function HomeScreen() {
   const firstName = userName.split(' ')[0];
   const monthLabel = getCurrentMonthLabel();
   const scrollPad = useTabBarScrollPadding();
-  const { finance, kpis, pendingMaintenanceCount } = HOME_MOCK;
 
+  const [finance, setFinance] = useState({ revenue: 0, expenses: 0, profit: 0 });
+  const [kpis, setKpis] = useState({ clients: 0, billings: 0, criticalStock: 0 });
   const [nextBilling, setNextBilling] = useState<{
     id: number;
     region: string;
@@ -47,8 +58,37 @@ export default function HomeScreen() {
           } else {
             setNextBilling(null);
           }
+
+          setKpis((prev) => ({
+            ...prev,
+            billings: data.cobrancas.length,
+          }));
         })
         .catch(() => setNextBilling(null));
+
+      getFinanceiroResumo()
+        .then((resumo) => {
+          setFinance({
+            revenue: resumo.receitas,
+            expenses: resumo.despesas,
+            profit: resumo.saldo,
+          });
+        })
+        .catch(() => {
+          setFinance({ revenue: 0, expenses: 0, profit: 0 });
+        });
+
+      getClientesSummary()
+        .then((clientes) => {
+          setKpis((prev) => ({ ...prev, clients: clientes.length }));
+        })
+        .catch(() => {});
+
+      getMateriais(['BAIXO', 'VAZIO'])
+        .then((criticos) => {
+          setKpis((prev) => ({ ...prev, criticalStock: criticos.length }));
+        })
+        .catch(() => {});
     }, []),
   );
 
@@ -95,8 +135,8 @@ export default function HomeScreen() {
           <HomeQuickActions />
 
           <HomePendenciasSection
-            pendingMaintenanceCount={pendingMaintenanceCount}
-            onPressMaintenance={() => {}}
+            pendingMaintenanceCount={0}
+            onPressMaintenance={() => router.push('/manutencao?nova=1')}
           />
         </View>
       </ScrollView>

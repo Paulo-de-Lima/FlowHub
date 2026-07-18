@@ -66,10 +66,10 @@ const TAB_ITEMS = [
     iconInactive: { ios: 'shippingbox', android: 'inventory_2', web: 'inventory_2' },
   },
   {
-    name: 'calculadora',
-    label: 'Calculadora',
-    iconActive: { ios: 'function', android: 'calculate', web: 'calculate' },
-    iconInactive: { ios: 'function', android: 'calculate', web: 'calculate' },
+    name: 'manutencao',
+    label: 'Manutenção',
+    iconActive: { ios: 'wrench.and.screwdriver.fill', android: 'build', web: 'build' },
+    iconInactive: { ios: 'wrench.and.screwdriver', android: 'build', web: 'build' },
   },
 ] as const;
 
