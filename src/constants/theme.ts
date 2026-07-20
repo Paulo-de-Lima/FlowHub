@@ -59,8 +59,6 @@ export const FeatureColors = {
   expenseBg: '#FEF2F2',
   material: '#F59E0B',
   materialBg: '#FFFBEB',
-  maintenance: '#F97316',
-  maintenanceBg: '#FFF7ED',
   record: '#6366F1',
   recordBg: '#EEF2FF',
 } as const;

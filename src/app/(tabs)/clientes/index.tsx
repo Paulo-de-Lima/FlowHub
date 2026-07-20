@@ -61,9 +61,9 @@ export default function ClientesListScreen() {
         <ClientesSearchBar
           busca={s.busca}
           filtro={s.filtro}
-          counts={s.filterCounts}
+          options={s.filterOptions}
           onBuscaChange={s.setBusca}
-          onFiltroChange={s.setFiltro}
+          onFiltroToggle={s.toggleFiltro}
         />
       </View>
       {isWeb ? <CobrancaAddBar label="Novo cliente" onPress={s.openCreate} /> : null}

@@ -5,7 +5,6 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { HomeHeader } from '@/components/home/home-header';
 import { HomeHeroCard } from '@/components/home/home-hero-card';
 import { HomeKpiStrip } from '@/components/home/home-kpi-strip';
-import { HomePendenciasSection } from '@/components/home/home-pendencias-section';
 import { HomeQuickActions } from '@/components/home/home-quick-actions';
 import {
   formatCobrancaTitulo,
@@ -133,11 +132,6 @@ export default function HomeScreen() {
           />
 
           <HomeQuickActions />
-
-          <HomePendenciasSection
-            pendingMaintenanceCount={0}
-            onPressMaintenance={() => router.push('/manutencao?nova=1')}
-          />
         </View>
       </ScrollView>
     </FlowHubScreenBackdrop>

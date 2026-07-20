@@ -4,13 +4,22 @@ import {
   createCliente,
   deleteCliente,
   getClientesSummary,
+  getCobrancas,
   updateCliente,
   type ClienteSummary,
+  type Cobranca,
   type CreateClienteInput,
   type UpdateClienteInput,
 } from '@/services/api';
 
-export type ClientesFiltro = 'todos' | 'com_divida' | 'em_dia' | 'sem_mesa';
+export type ClientesFiltroKey = 'com_divida' | 'em_dia' | `cobranca:${number}`;
+export type ClientesFiltro = ClientesFiltroKey | null;
+
+export type ClienteFilterOption = {
+  key: ClientesFiltroKey;
+  label: string;
+  count: number;
+};
 
 export type ClienteFormData = {
   nome: string;
@@ -21,11 +30,12 @@ export type ClienteFormData = {
 
 export function useClientesScreen() {
   const [clientes, setClientes] = useState<ClienteSummary[]>([]);
+  const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
-  const [filtro, setFiltro] = useState<ClientesFiltro>('todos');
+  const [filtro, setFiltro] = useState<ClientesFiltro>(null);
 
   const [formVisible, setFormVisible] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
@@ -52,7 +62,12 @@ export function useClientesScreen() {
     setError(null);
 
     try {
-      setClientes(await getClientesSummary());
+      const [clientesData, cobrancasResp] = await Promise.all([
+        getClientesSummary(),
+        getCobrancas(),
+      ]);
+      setClientes(clientesData);
+      setCobrancas(cobrancasResp.cobrancas);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar clientes.');
     } finally {
@@ -88,22 +103,41 @@ export function useClientesScreen() {
     };
   }, [clientes]);
 
-  const filterCounts = useMemo(
-    () => ({
-      todos: clientes.length,
-      com_divida: clientes.filter((c) => c.totalDeve > 0).length,
-      em_dia: clientes.filter((c) => c.qtdMesas > 0 && c.totalDeve === 0).length,
-      sem_mesa: clientes.filter((c) => c.qtdMesas === 0).length,
-    }),
-    [clientes],
-  );
+  const filterOptions = useMemo((): ClienteFilterOption[] => {
+    const cobrancasOrdenadas = [...cobrancas].sort((a, b) =>
+      a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }),
+    );
+
+    return [
+      {
+        key: 'com_divida',
+        label: 'Com dívida',
+        count: clientes.filter((c) => c.totalDeve > 0).length,
+      },
+      {
+        key: 'em_dia',
+        label: 'Em dia',
+        count: clientes.filter((c) => c.qtdMesas > 0 && c.totalDeve === 0).length,
+      },
+      ...cobrancasOrdenadas.map((cobranca) => ({
+        key: `cobranca:${cobranca.id}` as ClientesFiltroKey,
+        label: cobranca.nome,
+        count: clientes.filter((c) => c.cobrancaIds.includes(cobranca.id)).length,
+      })),
+    ];
+  }, [clientes, cobrancas]);
 
   const filtrados = useMemo(() => {
     let lista = [...clientes];
 
-    if (filtro === 'com_divida') lista = lista.filter((c) => c.totalDeve > 0);
-    if (filtro === 'em_dia') lista = lista.filter((c) => c.qtdMesas > 0 && c.totalDeve === 0);
-    if (filtro === 'sem_mesa') lista = lista.filter((c) => c.qtdMesas === 0);
+    if (filtro === 'com_divida') {
+      lista = lista.filter((c) => c.totalDeve > 0);
+    } else if (filtro === 'em_dia') {
+      lista = lista.filter((c) => c.qtdMesas > 0 && c.totalDeve === 0);
+    } else if (filtro?.startsWith('cobranca:')) {
+      const cobrancaId = Number(filtro.slice('cobranca:'.length));
+      lista = lista.filter((c) => c.cobrancaIds.includes(cobrancaId));
+    }
 
     const termo = busca.trim().toLowerCase();
     if (termo) {
@@ -119,6 +153,10 @@ export function useClientesScreen() {
       (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR', { sensitivity: 'base' }),
     );
   }, [clientes, filtro, busca]);
+
+  function toggleFiltro(key: ClientesFiltroKey) {
+    setFiltro((prev) => (prev === key ? null : key));
+  }
 
   function openCreate() {
     setFormMode('create');
@@ -214,7 +252,7 @@ export function useClientesScreen() {
     busca,
     filtro,
     stats,
-    filterCounts,
+    filterOptions,
     formVisible,
     formMode,
     editItem,
@@ -225,7 +263,7 @@ export function useClientesScreen() {
     deleteError,
     successMessage,
     setBusca,
-    setFiltro,
+    toggleFiltro,
     loadData,
     openCreate,
     openEdit,

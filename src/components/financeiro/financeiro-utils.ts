@@ -26,9 +26,9 @@ export function formatMonthShort(monthKey: string): string {
 
 export function getLancamentoIcon(tipo: LancamentoFinanceiro['tipo']): SymbolViewProps['name'] {
   if (tipo === 'receita') {
-    return { ios: 'arrow.down.circle.fill', android: 'south_west', web: 'south_west' };
+    return { ios: 'arrow.up.circle.fill', android: 'north_east', web: 'north_east' };
   }
-  return { ios: 'arrow.up.circle.fill', android: 'north_east', web: 'north_east' };
+  return { ios: 'arrow.down.circle.fill', android: 'south_west', web: 'south_west' };
 }
 
 export function getLancamentoColors(tipo: LancamentoFinanceiro['tipo']) {
@@ -95,7 +95,11 @@ export function formatValorInput(value: number): string {
 }
 
 export function getLancamentosFooterLabel(total: number): string {
-  if (total === 0) return 'Nenhum lançamento neste mês';
-  if (total === 1) return '1 lançamento neste mês';
-  return `${total} lançamentos neste mês`;
+  if (total === 0) return 'Nenhum registro ainda';
+  if (total === 1) return '1 registro';
+  return `${total} registros`;
+}
+
+export function getLancamentoTipoLabel(tipo: LancamentoFinanceiro['tipo']): string {
+  return tipo === 'receita' ? 'Receita' : 'Despesa';
 }

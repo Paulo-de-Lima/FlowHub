@@ -9,12 +9,12 @@ import {
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 
+import { ConfirmDeleteModal } from '@/components/cobrancas/ConfirmDeleteModal';
 import { FlowHubToast } from '@/components/cobrancas/FlowHubToast';
-import { CompraMaterialModal } from '@/components/estoque/CompraMaterialModal';
 import { EstoqueEmptyState } from '@/components/estoque/EstoqueEmptyState';
 import { EstoqueHeader } from '@/components/estoque/EstoqueHeader';
 import { EstoqueHeroCard } from '@/components/estoque/EstoqueHeroCard';
-import { EstoqueKpiGrid } from '@/components/estoque/EstoqueKpiGrid';
+import { MaterialFormModal } from '@/components/estoque/MaterialFormModal';
 import { MaterialListCard } from '@/components/estoque/MaterialListCard';
 import { useEstoqueScreen } from '@/components/estoque/use-estoque-screen';
 import { FlowHubAddButton } from '@/components/ui/FlowHubAddButton';
@@ -24,7 +24,7 @@ import { FeatureColors, FlowHubColors, HomeLayout, Spacing } from '@/constants/t
 import { useTabBarScrollPadding } from '@/hooks/use-tab-bar-scroll-padding';
 
 export default function EstoqueScreen() {
-  const { compra } = useLocalSearchParams<{ compra?: string }>();
+  const { novo, compra } = useLocalSearchParams<{ novo?: string; compra?: string }>();
   const s = useEstoqueScreen();
   const scrollPad = useTabBarScrollPadding();
   const isWeb = Platform.OS === 'web';
@@ -32,10 +32,10 @@ export default function EstoqueScreen() {
   useFocusEffect(
     useCallback(() => {
       s.loadData();
-      if (compra === '1') {
-        s.openCompra();
+      if (novo === '1' || novo === 'material' || compra === '1') {
+        s.openCreate();
       }
-    }, [s.loadData, s.openCompra, compra]),
+    }, [s.loadData, s.openCreate, novo, compra]),
   );
 
   const listHeader = (
@@ -53,20 +53,13 @@ export default function EstoqueScreen() {
           />
         )}
       </View>
-      <View style={styles.kpiWrap}>
-        <EstoqueKpiGrid
-          total={s.stats.total}
-          criticos={s.stats.criticos}
-          emDia={s.stats.emDia}
-        />
-      </View>
       {isWeb ? (
         <FlowHubAddButton
           variant="bar"
-          label="Registrar compra"
+          label="Registrar material"
           layout="fill"
-          onPress={s.openCompra}
-          accessibilityLabel="Registrar compra"
+          onPress={s.openCreate}
+          accessibilityLabel="Registrar material"
           style={styles.webBar}
         />
       ) : null}
@@ -86,7 +79,7 @@ export default function EstoqueScreen() {
         </Pressable>
       </View>
     ) : s.materiais.length === 0 ? (
-      <EstoqueEmptyState onRegistrarCompra={s.openCompra} />
+      <EstoqueEmptyState onRegistrar={s.openCreate} />
     ) : null;
 
   return (
@@ -110,7 +103,7 @@ export default function EstoqueScreen() {
           }
           renderItem={({ item }) => (
             <View style={styles.cardWrap}>
-              <MaterialListCard item={item} />
+              <MaterialListCard item={item} onPress={() => s.openEdit(item)} />
             </View>
           )}
         />
@@ -118,19 +111,35 @@ export default function EstoqueScreen() {
         {!isWeb ? (
           <FlowHubAddButton
             variant="fab"
-            onPress={s.openCompra}
-            accessibilityLabel="Registrar compra"
+            onPress={s.openCreate}
+            accessibilityLabel="Registrar material"
             style={{ position: 'absolute', right: Spacing.four, bottom: scrollPad }}
           />
         ) : null}
 
-        <CompraMaterialModal
-          visible={s.compraVisible}
+        <MaterialFormModal
+          visible={s.formVisible}
+          mode={s.formMode}
           saving={s.saving}
-          error={s.compraError}
+          deleting={s.deleting}
+          error={s.formError}
           materiais={s.materiais}
-          onClose={s.closeCompra}
-          onSave={s.handleCompra}
+          initial={s.editItem}
+          onClose={s.closeForm}
+          onSave={s.handleSave}
+          onDelete={s.formMode === 'edit' ? s.requestDelete : undefined}
+        />
+
+        <ConfirmDeleteModal
+          visible={s.deleteVisible}
+          title="Excluir material"
+          message="Deseja excluir"
+          highlight={s.editItem?.nome?.trim() || 'este material'}
+          hint="Materiais com registros vinculados não podem ser excluídos."
+          deleting={s.deleting}
+          error={s.deleteError}
+          onClose={s.closeDelete}
+          onConfirm={s.handleConfirmDelete}
         />
       </View>
     </FlowHubScreenBackdrop>
@@ -150,10 +159,6 @@ const styles = StyleSheet.create({
     backgroundColor: FlowHubColors.white,
     borderRadius: 16,
     minHeight: 140,
-  },
-  kpiWrap: {
-    paddingHorizontal: Spacing.four,
-    marginBottom: Spacing.four,
   },
   webBar: {
     marginHorizontal: Spacing.four,

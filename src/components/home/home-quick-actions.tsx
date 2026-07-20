@@ -21,12 +21,6 @@ const QUICK_ACTIONS = [
     href: '/clientes' as const,
   },
   {
-    id: 'nova-manutencao',
-    label: 'Nova\nmanutenção',
-    icon: { ios: 'wrench.and.screwdriver.fill', android: 'build', web: 'build' },
-    href: '/manutencao?nova=1' as const,
-  },
-  {
     id: 'nova-receita',
     label: 'Nova\nreceita',
     icon: {
@@ -48,9 +42,9 @@ const QUICK_ACTIONS = [
   },
   {
     id: 'novo-material',
-    label: 'Registrar\ncompra',
+    label: 'Registrar\nmaterial',
     icon: { ios: 'shippingbox.fill', android: 'inventory_2', web: 'inventory_2' },
-    href: '/estoque?compra=1' as const,
+    href: '/estoque?novo=1' as const,
   },
 ] as const;
 

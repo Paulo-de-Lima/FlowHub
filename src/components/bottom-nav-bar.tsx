@@ -65,12 +65,6 @@ const TAB_ITEMS = [
     iconActive: { ios: 'shippingbox.fill', android: 'inventory_2', web: 'inventory_2' },
     iconInactive: { ios: 'shippingbox', android: 'inventory_2', web: 'inventory_2' },
   },
-  {
-    name: 'manutencao',
-    label: 'Manutenção',
-    iconActive: { ios: 'wrench.and.screwdriver.fill', android: 'build', web: 'build' },
-    iconInactive: { ios: 'wrench.and.screwdriver', android: 'build', web: 'build' },
-  },
 ] as const;
 
 export type BottomNavBarProps = {

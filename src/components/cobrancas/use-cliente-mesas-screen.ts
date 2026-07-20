@@ -1,7 +1,12 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { parseRouteId } from '@/components/cobrancas/route-utils';
-import { formatDate, saldoRegistro } from '@/components/cobrancas/cobrancas-utils';
+import {
+  countRegistrosPosteriores,
+  formatCurrency,
+  formatDate,
+  saldoRegistro,
+} from '@/components/cobrancas/cobrancas-utils';
 import {
   createMesa,
   createRegistro,
@@ -360,11 +365,28 @@ export function useClienteMesasScreen(
 
     if (deleteTarget.kind === 'registro') {
       const { registro } = deleteTarget;
+      const mesa = mesas.find((m) => m.registros.some((r) => r.id === registro.id));
+      const saldo = saldoRegistro(registro);
+      const posteriores = mesa ? countRegistrosPosteriores(mesa.registros, registro) : 0;
+      const hints: string[] = [];
+
+      if (saldo > 0) {
+        hints.push(`Esta leitura tem ${formatCurrency(saldo)} em aberto.`);
+      }
+      if (posteriores > 0) {
+        hints.push(
+          posteriores === 1
+            ? 'Existe 1 leitura posterior nesta mesa; o valor deve será recalculado.'
+            : `Existem ${posteriores} leituras posteriores nesta mesa; os valores deve serão recalculados.`,
+        );
+      }
+      hints.push('Esta ação não pode ser desfeita.');
+
       return {
         title: 'Excluir leitura',
         message: 'Deseja excluir a leitura de',
         highlight: `${formatDate(registro.data_leitura)} (leitura ${registro.leitura})`,
-        hint: 'Esta ação não pode ser desfeita.',
+        hint: hints.join('\n\n'),
         confirmDisabled: false,
       };
     }
@@ -381,7 +403,7 @@ export function useClienteMesasScreen(
           : 'Esta ação não pode ser desfeita.',
       confirmDisabled: false,
     };
-  }, [deleteTarget]);
+  }, [deleteTarget, mesas]);
 
   return {
     clienteNome,

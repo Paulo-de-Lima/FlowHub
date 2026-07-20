@@ -1,5 +1,5 @@
 import { SymbolView } from 'expo-symbols';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { FlowHubStatusBadge } from '@/components/ui/FlowHubStatusBadge';
 import { ThemedText } from '@/components/themed-text';
@@ -21,13 +21,17 @@ import {
 
 type LancamentoListCardProps = {
   item: LancamentoFinanceiro;
+  onPress: () => void;
 };
 
-export function LancamentoListCard({ item }: LancamentoListCardProps) {
+export function LancamentoListCard({ item, onPress }: LancamentoListCardProps) {
   const colors = getLancamentoColors(item.tipo);
 
   return (
-    <View style={[styles.card, cardShadowSoft]}>
+    <Pressable
+      style={({ pressed }) => [styles.card, cardShadowSoft, pressed && styles.pressed]}
+      onPress={onPress}
+      accessibilityLabel={`Ver registro ${item.origem}`}>
       <View style={[styles.iconWrap, { backgroundColor: colors.iconBg }]}>
         <SymbolView name={getLancamentoIcon(item.tipo)} size={20} tintColor={colors.iconColor} />
       </View>
@@ -39,15 +43,22 @@ export function LancamentoListCard({ item }: LancamentoListCardProps) {
         <View style={styles.metaRow}>
           <ThemedText style={styles.date}>{formatLancamentoDate(item.dataGasto)}</ThemedText>
           {item.automatico ? (
-            <FlowHubStatusBadge variant="neutral" label="Automático" />
+            <FlowHubStatusBadge variant="neutral" label="Material" />
           ) : null}
         </View>
       </View>
 
-      <ThemedText style={[styles.valor, { color: colors.valueColor }]}>
-        {formatLancamentoValor(item.valor, item.tipo)}
-      </ThemedText>
-    </View>
+      <View style={styles.trailing}>
+        <ThemedText style={[styles.valor, { color: colors.valueColor }]}>
+          {formatLancamentoValor(item.valor, item.tipo)}
+        </ThemedText>
+        <SymbolView
+          name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+          size={14}
+          tintColor={FlowHubColors.darkGray}
+        />
+      </View>
+    </Pressable>
   );
 }
 
@@ -62,6 +73,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: FlowHubPalette.borderSubtle,
   },
+  pressed: { opacity: 0.92 },
   iconWrap: {
     width: 44,
     height: 44,
@@ -74,5 +86,6 @@ const styles = StyleSheet.create({
   origem: { fontSize: 16, fontWeight: '700', color: FlowHubColors.navy },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, flexWrap: 'wrap' },
   date: { fontSize: 12, fontWeight: '500', color: FlowHubColors.darkGray },
-  valor: { fontSize: 15, fontWeight: '800', flexShrink: 0 },
+  trailing: { alignItems: 'flex-end', gap: 4, flexShrink: 0 },
+  valor: { fontSize: 15, fontWeight: '800' },
 });

@@ -40,6 +40,18 @@ router.get('/', async (req: Request, res: Response) => {
 
     const totaisMap = await calcClientesTotaisBatch(clientes.map((c: { id: number }) => c.id));
 
+    const vinculos = await prisma.cobranca_clientes.findMany({
+      where: { cliente_id: { in: clientes.map((c: { id: number }) => c.id) } },
+      select: { cliente_id: true, cobranca_id: true },
+    });
+
+    const cobrancaIdsPorCliente = new Map<number, number[]>();
+    for (const v of vinculos) {
+      const lista = cobrancaIdsPorCliente.get(v.cliente_id) ?? [];
+      lista.push(v.cobranca_id);
+      cobrancaIdsPorCliente.set(v.cliente_id, lista);
+    }
+
     res.json(
       clientes.map((c: (typeof clientes)[number]) => {
         const totais = totaisMap.get(c.id) ?? { qtdMesas: 0, totalDeve: 0, registrosPendentes: 0 };
@@ -52,6 +64,7 @@ router.get('/', async (req: Request, res: Response) => {
           qtdMesas: totais.qtdMesas,
           totalDeve: totais.totalDeve,
           registrosPendentes: totais.registrosPendentes,
+          cobrancaIds: cobrancaIdsPorCliente.get(c.id) ?? [],
         };
       }),
     );

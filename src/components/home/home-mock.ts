@@ -15,7 +15,6 @@ export type HomeMockData = {
     criticalStock: number;
   };
   nextBilling: HomeBillingPreview | null;
-  pendingMaintenanceCount: number;
 };
 
 export const HOME_MOCK: HomeMockData = {
@@ -30,5 +29,4 @@ export const HOME_MOCK: HomeMockData = {
     criticalStock: 0,
   },
   nextBilling: null,
-  pendingMaintenanceCount: 0,
 };

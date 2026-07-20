@@ -11,7 +11,11 @@ import {
   View,
 } from 'react-native';
 
-import { parseDisplayDateToISO, todayDisplay } from '@/components/cobrancas/cobrancas-utils';
+import {
+  formatDate,
+  parseDisplayDateToISO,
+  todayDisplay,
+} from '@/components/cobrancas/cobrancas-utils';
 import { flowHubModalStyles, FlowHubModalHeaderStrip } from '@/components/ui/flowHubModalStyles';
 import { ThemedText } from '@/components/themed-text';
 import {
@@ -23,40 +27,52 @@ import {
   Radius,
   Spacing,
 } from '@/constants/theme';
+import type { LancamentoFinanceiro } from '@/services/api';
 
 import { formatValorInput, parseValorInput, todayISO } from './financeiro-utils';
 import type { LancamentoFormData } from './use-financeiro-screen';
 
 type LancamentoFormModalProps = {
   visible: boolean;
+  mode: 'create' | 'edit';
   saving: boolean;
   error: string | null;
   initialTipo: 'receita' | 'despesa';
+  editItem?: LancamentoFinanceiro | null;
   onClose: () => void;
   onSubmit: (data: LancamentoFormData) => void;
 };
 
 export function LancamentoFormModal({
   visible,
+  mode,
   saving,
   error,
   initialTipo,
+  editItem = null,
   onClose,
   onSubmit,
 }: LancamentoFormModalProps) {
+  const isEdit = mode === 'edit' && editItem != null;
   const [tipo, setTipo] = React.useState<'receita' | 'despesa'>(initialTipo);
   const [origem, setOrigem] = React.useState('');
   const [valorText, setValorText] = React.useState('');
   const [dataGasto, setDataGasto] = React.useState('');
 
   React.useEffect(() => {
-    if (visible) {
+    if (!visible) return;
+    if (isEdit && editItem) {
+      setTipo(editItem.tipo);
+      setOrigem(editItem.origem);
+      setValorText(formatValorInput(editItem.valor));
+      setDataGasto(formatDate(editItem.dataGasto ?? todayISO()));
+    } else {
       setTipo(initialTipo);
       setOrigem('');
       setValorText('');
       setDataGasto(todayDisplay());
     }
-  }, [visible, initialTipo]);
+  }, [visible, initialTipo, isEdit, editItem]);
 
   function handleSubmit() {
     const valor = parseValorInput(valorText);
@@ -82,7 +98,9 @@ export function LancamentoFormModal({
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               contentContainerStyle={flowHubModalStyles.scroll}>
-              <ThemedText style={flowHubModalStyles.title}>Novo lançamento</ThemedText>
+              <ThemedText style={flowHubModalStyles.title}>
+                {isEdit ? 'Editar registro' : 'Novo registro'}
+              </ThemedText>
 
               <ThemedText style={styles.sectionLabel}>Tipo</ThemedText>
               <View style={styles.tipoRow}>
@@ -153,7 +171,9 @@ export function LancamentoFormModal({
                   {saving ? (
                     <ActivityIndicator color={FlowHubColors.white} />
                   ) : (
-                    <ThemedText style={styles.primaryText}>Salvar</ThemedText>
+                    <ThemedText style={styles.primaryText}>
+                      {isEdit ? 'Salvar alterações' : 'Salvar registro'}
+                    </ThemedText>
                   )}
                 </Pressable>
               </View>
@@ -180,16 +200,11 @@ function TipoChip({
 }) {
   return (
     <Pressable
-      style={[
-        styles.tipoChip,
-        active && { backgroundColor: activeBg, borderColor: activeColor },
-      ]}
+      style={[styles.tipoChip, active && { backgroundColor: activeBg, borderColor: activeColor }]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}>
-      <ThemedText style={[styles.tipoChipText, active && { color: activeColor }]}>
-        {label}
-      </ThemedText>
+      <ThemedText style={[styles.tipoChipText, active && { color: activeColor }]}>{label}</ThemedText>
     </Pressable>
   );
 }
@@ -225,11 +240,7 @@ const styles = StyleSheet.create({
     color: FlowHubColors.navy,
     marginTop: Spacing.two,
   },
-  tipoRow: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-    marginTop: Spacing.one,
-  },
+  tipoRow: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.one },
   tipoChip: {
     flex: 1,
     borderRadius: Radius.md,
@@ -239,20 +250,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
   },
-  tipoChipText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: FlowHubColors.darkGray,
-  },
+  tipoChipText: { fontSize: 15, fontWeight: '700', color: FlowHubColors.darkGray },
   field: { gap: Spacing.one },
   label: { fontSize: 14, fontWeight: '600', color: FlowHubColors.navy, marginTop: Spacing.two },
   hint: { fontSize: 12, color: FlowHubColors.darkGray, marginTop: 4 },
   error: { color: FeatureColors.expense, fontSize: 14, marginTop: Spacing.two },
-  actions: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-    marginTop: Spacing.four,
-  },
+  actions: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.four },
   secondaryText: { color: FlowHubColors.darkGray, fontWeight: '700', fontSize: 15 },
   primaryText: { color: FlowHubColors.white, fontWeight: '700', fontSize: 15 },
   btnDisabled: { opacity: 0.7 },

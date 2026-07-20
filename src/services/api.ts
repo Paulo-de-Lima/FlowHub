@@ -73,6 +73,7 @@ export type ClienteSummary = Cliente & {
   qtdMesas: number;
   totalDeve: number;
   registrosPendentes: number;
+  cobrancaIds: number[];
 };
 
 export async function getClientesSummary(): Promise<ClienteSummary[]> {
@@ -394,12 +395,43 @@ export type LancamentosResponse = {
   lancamentos: LancamentoFinanceiro[];
 };
 
+export type UpdateLancamentoInput = {
+  tipo?: 'receita' | 'despesa';
+  origem?: string;
+  valor?: number;
+  dataGasto?: string;
+};
+
+export type PagamentoPendenteCliente = {
+  id: number;
+  nome: string | null;
+  numero: string | null;
+  totalDeve: number;
+  qtdMesas: number;
+  registrosPendentes: number;
+};
+
 export type CreateLancamentoInput = {
   tipo: 'receita' | 'despesa';
   origem: string;
   valor: number;
   dataGasto?: string;
 };
+
+export async function getPagamentosPendentesClientes(): Promise<PagamentoPendenteCliente[]> {
+  const clientes = await getClientesSummary();
+  return clientes
+    .filter((c) => c.totalDeve > 0)
+    .map((c) => ({
+      id: c.id,
+      nome: c.nome,
+      numero: c.numero,
+      totalDeve: c.totalDeve,
+      qtdMesas: c.qtdMesas,
+      registrosPendentes: c.registrosPendentes,
+    }))
+    .sort((a, b) => b.totalDeve - a.totalDeve);
+}
 
 export async function getFinanceiroResumo(mes?: string): Promise<FinanceiroResumo> {
   const query = mes ? `?mes=${encodeURIComponent(mes)}` : '';
@@ -409,12 +441,14 @@ export async function getFinanceiroResumo(mes?: string): Promise<FinanceiroResum
 export async function getFinanceiroLancamentos(params?: {
   mes?: string;
   tipo?: 'receita' | 'despesa' | 'todos';
+  busca?: string;
   limit?: number;
   offset?: number;
 }): Promise<LancamentosResponse> {
   const search = new URLSearchParams();
   if (params?.mes) search.set('mes', params.mes);
   if (params?.tipo) search.set('tipo', params.tipo);
+  if (params?.busca?.trim()) search.set('busca', params.busca.trim());
   if (params?.limit != null) search.set('limit', String(params.limit));
   if (params?.offset != null) search.set('offset', String(params.offset));
   const qs = search.toString();
@@ -428,43 +462,48 @@ export async function createLancamento(data: CreateLancamentoInput): Promise<Lan
   });
 }
 
-// --- Manutenções ---
-
-export type ManutencaoItem = {
-  id: number;
-  materialId: number;
-  materialNome: string;
-  unidade: string;
-  quantidade: number;
-};
-
-export type Manutencao = {
-  id: number;
-  clienteId: number;
-  clienteNome: string;
-  descricao: string;
-  data: string;
-  createdAt: string;
-  itens: ManutencaoItem[];
-};
-
-export type CreateManutencaoInput = {
-  clienteId: number;
-  descricao: string;
-  data?: string;
-  itens: { materialId: number; quantidade: number }[];
-};
-
-export async function getManutencoes(mes?: string): Promise<Manutencao[]> {
-  const query = mes ? `?mes=${encodeURIComponent(mes)}` : '';
-  return request<Manutencao[]>(`/manutencoes${query}`);
+export async function updateLancamento(
+  id: number,
+  data: UpdateLancamentoInput,
+): Promise<LancamentoFinanceiro> {
+  return request<LancamentoFinanceiro>(`/financeiro/lancamentos/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 }
 
-export async function createManutencao(data: CreateManutencaoInput): Promise<Manutencao> {
-  return request<Manutencao>('/manutencoes', {
+export async function deleteLancamento(id: number): Promise<void> {
+  await request<void>(`/financeiro/lancamentos/${id}`, { method: 'DELETE' });
+}
+
+export async function createMaterial(data: {
+  nome: string;
+  unidade?: string;
+  quantidade?: number;
+  estoqueMinimo?: number;
+}): Promise<Material> {
+  return request<Material>('/materiais', {
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+export type UpdateMaterialInput = {
+  nome?: string;
+  unidade?: string;
+  quantidade?: number;
+  estoqueMinimo?: number;
+};
+
+export async function updateMaterial(id: number, data: UpdateMaterialInput): Promise<Material> {
+  return request<Material>(`/materiais/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteMaterial(id: number): Promise<void> {
+  await request<void>(`/materiais/${id}`, { method: 'DELETE' });
 }
 
 export function getCurrentMonthKey(): string {

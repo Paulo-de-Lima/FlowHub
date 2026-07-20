@@ -1,4 +1,5 @@
 import type { FlowHubStatusBadgeVariant } from '@/components/ui/FlowHubStatusBadge';
+import { FeatureColors, FlowHubColors, FlowHubPalette } from '@/constants/theme';
 import type { Material, MaterialStatus } from '@/services/api';
 
 export function materialStatusLabel(status: MaterialStatus): string {
@@ -43,6 +44,41 @@ export function todayIsoDate(): string {
 
 export function isMaterialCritico(status: MaterialStatus): boolean {
   return status === 'VAZIO' || status === 'BAIXO';
+}
+
+export function getMaterialStockRatio(material: Pick<Material, 'quantidade' | 'estoqueMinimo'>): number {
+  if (material.estoqueMinimo <= 0) return material.quantidade > 0 ? 1 : 0;
+  return Math.min(1.5, material.quantidade / material.estoqueMinimo);
+}
+
+export function materialStatusBlockStyle(status: MaterialStatus): {
+  backgroundColor: string;
+  valueColor: string;
+} {
+  switch (status) {
+    case 'VAZIO':
+      return { backgroundColor: FeatureColors.expenseBg, valueColor: FeatureColors.expense };
+    case 'BAIXO':
+      return { backgroundColor: FeatureColors.materialBg, valueColor: FeatureColors.material };
+    default:
+      return { backgroundColor: FlowHubPalette.surfaceSunken, valueColor: FlowHubColors.navy };
+  }
+}
+
+export function formatMaterialDate(iso: string | null): string {
+  if (!iso) return '—';
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${day}/${month}/${year}`;
+  }
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return '—';
+  return parsed.toLocaleDateString('pt-BR');
+}
+
+export function getMaterialDisplayDate(material: Pick<Material, 'updatedAt' | 'createdAt'>): string {
+  return formatMaterialDate(material.updatedAt ?? material.createdAt);
 }
 
 export function sortMateriais(list: Material[]): Material[] {

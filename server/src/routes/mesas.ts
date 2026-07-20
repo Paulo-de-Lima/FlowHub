@@ -91,13 +91,16 @@ async function getLeituraAnterior(mesaId: number, excluirId?: number) {
   return anterior?.leitura ?? null;
 }
 
+type DbClient = Pick<typeof prisma, 'registros_mesa'>;
+
 async function getLeituraAnteriorParaRegistro(
   mesaId: number,
   excluirId: number,
   dataLeitura: Date,
   registroId: number,
+  db: DbClient = prisma,
 ) {
-  const anterior = await prisma.registros_mesa.findFirst({
+  const anterior = await db.registros_mesa.findFirst({
     where: {
       mesa_id: mesaId,
       id: { not: excluirId },
@@ -117,9 +120,10 @@ async function recalcularRegistrosPosteriores(
   valorFicha: number,
   afterData: Date,
   afterId: number,
-  leituraAnteriorBase: number,
+  leituraAnteriorBase: number | null,
+  db: DbClient = prisma,
 ) {
-  const posteriores = await prisma.registros_mesa.findMany({
+  const posteriores = await db.registros_mesa.findMany({
     where: {
       mesa_id: mesaId,
       OR: [
@@ -135,7 +139,7 @@ async function recalcularRegistrosPosteriores(
     const deveCalc = calcularDeveLeitura(reg.leitura, leituraAnterior, valorFicha);
     const valorPagoAtual = serializeDecimal(reg.valor_pago);
     const pagamento = normalizarPagamento(deveCalc, Math.min(valorPagoAtual, deveCalc));
-    await prisma.registros_mesa.update({
+    await db.registros_mesa.update({
       where: { id: reg.id },
       data: {
         deve: pagamento.deve,
@@ -488,7 +492,41 @@ router.delete('/registros/:id', async (req: Request, res: Response) => {
   }
 
   try {
-    await prisma.registros_mesa.delete({ where: { id } });
+    const atual = await prisma.registros_mesa.findUnique({ where: { id } });
+    if (!atual) {
+      res.status(404).json({ error: 'Registro não encontrado.' });
+      return;
+    }
+
+    const mesa = await prisma.mesas.findUnique({ where: { id: atual.mesa_id } });
+    if (!mesa) {
+      res.status(404).json({ error: 'Mesa não encontrada.' });
+      return;
+    }
+
+    const valorFicha = serializeDecimal(mesa.valor_ficha);
+
+    await prisma.$transaction(async (tx: typeof prisma) => {
+      const leituraAnterior = await getLeituraAnteriorParaRegistro(
+        atual.mesa_id,
+        id,
+        atual.data_leitura,
+        id,
+        tx,
+      );
+
+      await tx.registros_mesa.delete({ where: { id } });
+
+      await recalcularRegistrosPosteriores(
+        atual.mesa_id,
+        valorFicha,
+        atual.data_leitura,
+        id,
+        leituraAnterior,
+        tx,
+      );
+    });
+
     res.status(204).send();
   } catch (error) {
     if (isNotFoundError(error)) {

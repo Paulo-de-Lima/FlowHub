@@ -18,7 +18,7 @@ export function FinanceiroKpiGrid({ mes, receitas, despesas, saldo }: Financeiro
       items={[
         {
           id: 'receitas',
-          icon: { ios: 'arrow.down.circle.fill', android: 'south_west', web: 'south_west' },
+          icon: { ios: 'arrow.up.circle.fill', android: 'north_east', web: 'north_east' },
           value: formatCurrency(receitas),
           label: 'Receitas',
           hint: `em ${monthHint}`,
@@ -29,7 +29,7 @@ export function FinanceiroKpiGrid({ mes, receitas, despesas, saldo }: Financeiro
         },
         {
           id: 'despesas',
-          icon: { ios: 'arrow.up.circle.fill', android: 'north_east', web: 'north_east' },
+          icon: { ios: 'arrow.down.circle.fill', android: 'south_west', web: 'south_west' },
           value: formatCurrency(despesas),
           label: 'Despesas',
           hint: `em ${monthHint}`,

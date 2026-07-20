@@ -203,6 +203,19 @@ export function isRegistroMaisRecente(
   return ultimo?.id === registro.id;
 }
 
+export function countRegistrosPosteriores(
+  registros: { id: number; data_leitura: string }[],
+  alvo: { id: number; data_leitura: string },
+): number {
+  return registros.filter((r) => {
+    if (r.id === alvo.id) return false;
+    const cmp = r.data_leitura.localeCompare(alvo.data_leitura);
+    if (cmp > 0) return true;
+    if (cmp === 0) return r.id > alvo.id;
+    return false;
+  }).length;
+}
+
 function compareRegistrosDesc(
   a: { id: number; data_leitura: string },
   b: { id: number; data_leitura: string },

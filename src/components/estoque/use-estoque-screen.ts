@@ -1,20 +1,15 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { sortMateriais, todayIsoDate } from '@/components/estoque/estoque-utils';
+import { sortMateriais } from '@/components/estoque/estoque-utils';
 import {
+  createMaterial,
+  deleteMaterial,
   getMateriais,
-  registrarCompraMaterial,
-  type CompraMaterialInput,
+  updateMaterial,
   type Material,
 } from '@/services/api';
 
-export type CompraMaterialFormData = {
-  nome: string;
-  unidade: string;
-  quantidade: string;
-  valorTotal: string;
-  dataCompra: string;
-};
+import type { MaterialFormData } from './MaterialFormModal';
 
 export function useEstoqueScreen() {
   const [materiais, setMateriais] = useState<Material[]>([]);
@@ -22,9 +17,15 @@ export function useEstoqueScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [compraVisible, setCompraVisible] = useState(false);
+  const [formVisible, setFormVisible] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+  const [editItem, setEditItem] = useState<Material | null>(null);
   const [saving, setSaving] = useState(false);
-  const [compraError, setCompraError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,75 +69,110 @@ export function useEstoqueScreen() {
       }
     }
 
-    return {
-      total: materiais.length,
-      criticos,
-      vazios,
-      baixos,
-      emDia,
-      comprasMes: 0,
-    };
+    return { total: materiais.length, criticos, vazios, baixos, emDia };
   }, [materiais]);
 
   const materiaisOrdenados = useMemo(() => sortMateriais(materiais), [materiais]);
 
-  const openCompra = useCallback(() => {
-    setCompraError(null);
-    setCompraVisible(true);
+  const openCreate = useCallback(() => {
+    setFormMode('create');
+    setEditItem(null);
+    setFormError(null);
+    setFormVisible(true);
   }, []);
 
-  const closeCompra = useCallback(() => {
-    setCompraVisible(false);
-    setCompraError(null);
+  const openEdit = useCallback((item: Material) => {
+    setFormMode('edit');
+    setEditItem(item);
+    setFormError(null);
+    setFormVisible(true);
   }, []);
 
-  async function handleCompra(data: CompraMaterialFormData) {
+  const closeForm = useCallback(() => {
+    setFormVisible(false);
+    setEditItem(null);
+    setFormError(null);
+  }, []);
+
+  async function handleSave(data: MaterialFormData) {
     const nome = data.nome.trim();
     if (!nome) {
-      setCompraError('Informe o nome do material.');
+      setFormError('Informe o nome do material.');
+      return;
+    }
+
+    const unidade = data.unidade.trim();
+    if (!unidade) {
+      setFormError('Informe a unidade do material.');
+      return;
+    }
+
+    const estoqueMinimo = Number.parseInt(data.estoqueMinimo.trim(), 10);
+    if (Number.isNaN(estoqueMinimo) || estoqueMinimo <= 0) {
+      setFormError('Informe um estoque mínimo válido.');
       return;
     }
 
     const quantidade = Number.parseFloat(data.quantidade.trim().replace(',', '.'));
-    if (Number.isNaN(quantidade) || quantidade <= 0) {
-      setCompraError('Informe uma quantidade válida.');
-      return;
-    }
-
-    const valorTotal = Number.parseFloat(data.valorTotal.trim().replace(',', '.'));
-    if (Number.isNaN(valorTotal) || valorTotal < 0) {
-      setCompraError('Informe um valor total válido.');
-      return;
-    }
-
-    const dataCompra = data.dataCompra.trim() || todayIsoDate();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dataCompra)) {
-      setCompraError('Informe a data no formato AAAA-MM-DD.');
+    if (Number.isNaN(quantidade) || quantidade < 0) {
+      setFormError('Informe uma quantidade válida.');
       return;
     }
 
     setSaving(true);
-    setCompraError(null);
+    setFormError(null);
 
-    const payload: CompraMaterialInput = {
+    const payload = {
       nome,
+      unidade,
       quantidade,
-      valorTotal,
-      dataCompra,
+      estoqueMinimo,
     };
 
-    const unidade = data.unidade.trim();
-    if (unidade) payload.unidade = unidade;
-
     try {
-      await registrarCompraMaterial(payload);
-      closeCompra();
-      showSuccess('Compra registrada.');
+      if (formMode === 'edit' && editItem) {
+        await updateMaterial(editItem.id, payload);
+        closeForm();
+        showSuccess('Material atualizado.');
+      } else {
+        await createMaterial(payload);
+        closeForm();
+        showSuccess('Material registrado.');
+      }
       await loadData(true);
     } catch (err) {
-      setCompraError(err instanceof Error ? err.message : 'Erro ao registrar compra.');
+      setFormError(err instanceof Error ? err.message : 'Erro ao salvar material.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  function requestDelete() {
+    setDeleteError(null);
+    setDeleteVisible(true);
+  }
+
+  function closeDelete() {
+    setDeleteVisible(false);
+    setDeleteError(null);
+  }
+
+  async function handleConfirmDelete() {
+    if (!editItem) return;
+
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await deleteMaterial(editItem.id);
+      closeDelete();
+      closeForm();
+      showSuccess('Material excluído.');
+      await loadData(true);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Erro ao excluir material.');
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -146,14 +182,23 @@ export function useEstoqueScreen() {
     refreshing,
     error,
     stats,
-    compraVisible,
+    formVisible,
+    formMode,
+    editItem,
     saving,
-    compraError,
+    formError,
+    deleteVisible,
+    deleting,
+    deleteError,
     successMessage,
     loadData,
-    openCompra,
-    closeCompra,
-    handleCompra,
+    openCreate,
+    openEdit,
+    closeForm,
+    handleSave,
+    requestDelete,
+    closeDelete,
+    handleConfirmDelete,
     dismissSuccess: () => setSuccessMessage(null),
   };
 }

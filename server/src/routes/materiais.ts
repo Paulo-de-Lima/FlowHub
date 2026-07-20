@@ -140,7 +140,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     res.status(204).send();
   } catch (error) {
     console.error('[DELETE /materiais/:id]', error);
-    res.status(500).json({ error: 'Erro ao excluir material. Verifique se há manutenções vinculadas.' });
+    res.status(500).json({ error: 'Erro ao excluir material. Verifique se há registros vinculados.' });
   }
 });
 

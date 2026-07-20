@@ -4,29 +4,22 @@ import { ThemedText } from '@/components/themed-text';
 import { FlowHubSearchField } from '@/components/ui/FlowHubSearchField';
 import { FlowHubColors, FlowHubPalette, Spacing } from '@/constants/theme';
 
-import type { ClientesFiltro } from '@/components/clientes/use-clientes-screen';
+import type { ClienteFilterOption, ClientesFiltro } from '@/components/clientes/use-clientes-screen';
 
 type ClientesSearchBarProps = {
   busca: string;
   filtro: ClientesFiltro;
-  counts: Record<ClientesFiltro, number>;
+  options: ClienteFilterOption[];
   onBuscaChange: (v: string) => void;
-  onFiltroChange: (f: ClientesFiltro) => void;
+  onFiltroToggle: (key: ClienteFilterOption['key']) => void;
 };
-
-const FILTROS: { key: ClientesFiltro; label: string }[] = [
-  { key: 'todos', label: 'Todos' },
-  { key: 'com_divida', label: 'Com dívida' },
-  { key: 'em_dia', label: 'Em dia' },
-  { key: 'sem_mesa', label: 'Sem mesa' },
-];
 
 export function ClientesSearchBar({
   busca,
   filtro,
-  counts,
+  options,
   onBuscaChange,
-  onFiltroChange,
+  onFiltroToggle,
 }: ClientesSearchBarProps) {
   return (
     <View style={styles.wrap}>
@@ -37,17 +30,17 @@ export function ClientesSearchBar({
       />
 
       <View style={styles.chips}>
-        {FILTROS.map((f) => {
+        {options.map((f) => {
           const active = filtro === f.key;
           return (
             <Pressable
               key={f.key}
               style={[styles.chip, active && styles.chipActive]}
-              onPress={() => onFiltroChange(f.key)}
+              onPress={() => onFiltroToggle(f.key)}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}>
               <ThemedText style={[styles.chipText, active && styles.chipTextActive]}>
-                {f.label} ({counts[f.key]})
+                {f.label} ({f.count})
               </ThemedText>
             </Pressable>
           );

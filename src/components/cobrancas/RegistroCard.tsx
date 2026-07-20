@@ -56,19 +56,32 @@ export function RegistroCard({
 
     return (
       <View style={styles.compactWrap}>
-        <Pressable
-          style={({ pressed }) => [styles.compactRow, pressed && styles.pressed]}
-          onPress={onEditar}
-          accessibilityLabel={`Leitura de ${formatDate(registro.data_leitura)}, ${statusLabel}`}>
-          <ThemedText style={styles.compactDate}>{formatDate(registro.data_leitura)}</ThemedText>
-          <ThemedText style={styles.compactDot}>·</ThemedText>
-          <ThemedText style={styles.compactLeitura}>{formatLeituraMedidor(registro.leitura)}</ThemedText>
-          <ThemedText style={styles.compactDot}>·</ThemedText>
-          <ThemedText style={styles.compactValor}>{formatCurrency(registro.deve)}</ThemedText>
-          <View style={[styles.statusPill, statusStyle]}>
-            <ThemedText style={styles.statusText}>{statusLabel}</ThemedText>
-          </View>
-        </Pressable>
+        <View style={styles.compactRow}>
+          <Pressable
+            style={({ pressed }) => [styles.compactMain, pressed && styles.pressed]}
+            onPress={onEditar}
+            accessibilityLabel={`Leitura de ${formatDate(registro.data_leitura)}, ${statusLabel}`}>
+            <ThemedText style={styles.compactDate}>{formatDate(registro.data_leitura)}</ThemedText>
+            <ThemedText style={styles.compactDot}>·</ThemedText>
+            <ThemedText style={styles.compactLeitura}>{formatLeituraMedidor(registro.leitura)}</ThemedText>
+            <ThemedText style={styles.compactDot}>·</ThemedText>
+            <ThemedText style={styles.compactValor}>{formatCurrency(registro.deve)}</ThemedText>
+            <View style={[styles.statusPill, statusStyle]}>
+              <ThemedText style={styles.statusText}>{statusLabel}</ThemedText>
+            </View>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.iconBtnCompact, styles.deleteBtn, pressed && styles.pressed]}
+            onPress={onDelete}
+            accessibilityLabel="Excluir leitura"
+            hitSlop={6}>
+            <SymbolView
+              name={{ ios: 'trash', android: 'delete', web: 'delete' }}
+              size={16}
+              tintColor={FeatureColors.expense}
+            />
+          </Pressable>
+        </View>
 
         <Pressable
           style={({ pressed }) => [styles.pagamentoBtnCompact, pressed && styles.pressed]}
@@ -205,14 +218,30 @@ const styles = StyleSheet.create({
   compactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 4,
+    gap: Spacing.one,
     paddingVertical: 8,
-    paddingHorizontal: Spacing.two,
+    paddingLeft: Spacing.two,
+    paddingRight: Spacing.one,
     backgroundColor: FlowHubColors.white,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: SemanticColors.borderSubtle,
+  },
+  compactMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
+    minWidth: 0,
+  },
+  iconBtnCompact: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
   compactDate: {
     ...CobrancaTypography.label,
