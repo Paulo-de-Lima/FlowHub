@@ -248,7 +248,7 @@ export default function FinanceiroScreen() {
         visible={s.deleteVisible}
         title="Excluir registro"
         message="Deseja excluir"
-        highlight={s.detailItem?.origem ?? 'este registro'}
+        highlight={s.deleteItem?.origem ?? 'este registro'}
         hint="Esta ação não pode ser desfeita."
         deleting={s.deleting}
         error={s.deleteError}

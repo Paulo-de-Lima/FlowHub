@@ -50,6 +50,7 @@ export function useFinanceiroScreen() {
   const [detailItem, setDetailItem] = useState<LancamentoFinanceiro | null>(null);
 
   const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<LancamentoFinanceiro | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -152,13 +153,16 @@ export function useFinanceiroScreen() {
 
   function requestDeleteFromDetail() {
     if (!detailItem || detailItem.automatico) return;
+    setDeleteItem(detailItem);
     setDeleteError(null);
+    setDetailVisible(false);
     setDeleteVisible(true);
   }
 
   function closeDelete() {
     setDeleteVisible(false);
     setDeleteError(null);
+    setDeleteItem(null);
   }
 
   async function handleSave(data: LancamentoFormData) {
@@ -206,13 +210,13 @@ export function useFinanceiroScreen() {
   }
 
   async function handleConfirmDelete() {
-    if (!detailItem) return;
+    if (!deleteItem) return;
 
     setDeleting(true);
     setDeleteError(null);
 
     try {
-      await deleteLancamento(detailItem.id);
+      await deleteLancamento(deleteItem.id);
       closeDelete();
       closeDetail();
       showSuccess('Registro excluído.');
@@ -248,6 +252,7 @@ export function useFinanceiroScreen() {
     detailVisible,
     detailItem,
     deleteVisible,
+    deleteItem,
     deleting,
     deleteError,
     successMessage,
